@@ -54,7 +54,8 @@ namespace Vision2020
         public bool complete { get; set; }
         public bool valid { get; set; }
         public bool started { get; set; }
-        public float lapTime { get; set; }
+        public float lapTime => (float) lapTimeInMs / 1000f;
+        public UInt32 lapTimeInMs { get; set; }
     }
 
     public class PlayerInfo
@@ -151,10 +152,10 @@ namespace Vision2020
                         //  by checking sinsible sector and lap times.
                         previousLap.complete =
                             previousLap.started && lastLap.sector1TimeInMS > 0 && lastLap.sector2TimeInMS > 0 &&
-                                (lastLap.currentLapTime * 1000) > (lastLap.sector1TimeInMS + lastLap.sector2TimeInMS);
+                                (lastLap.currentLapTimeInMS) > (lastLap.sector1TimeInMS + lastLap.sector2TimeInMS);
                         if (previousLap.complete)
                         {
-                            previousLap.lapTime = lapData.lastLapTime;
+                            previousLap.lapTimeInMs = lapData.lastLapTimeInMS;
                             completedLap = previousLap;
                         }
                     }

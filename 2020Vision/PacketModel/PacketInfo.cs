@@ -47,6 +47,9 @@ namespace Vision2020
         private int packetFinalClassificationDataSize = new SizeInfo<PacketFinalClassificationData>().Size;
         private int packetLobbyInfoDataSize = new SizeInfo<PacketLobbyInfoData>().Size;
         private int participantDataSize = new SizeInfo<ParticipantData>().Size;
+        private int packetCarDamageDataSize = new SizeInfo<PacketCarDamageData>().Size;
+        private int packetSessionHistoryDataSize = new SizeInfo<PacketSessionHistoryData>().Size;
+
         private int boolSize = new SizeInfo<bool>().Size;
         private int floatSize = new SizeInfo<float>().Size;
         private int intSize = new SizeInfo<int>().Size;
@@ -75,6 +78,8 @@ namespace Vision2020
         public static int PacketFinalClassificationDataSize { get { return _instance.packetFinalClassificationDataSize; } }
         public static int PacketLobbyInfoDataSize { get { return _instance.packetLobbyInfoDataSize; } }
         public static int ParticipantDataSize { get { return _instance.participantDataSize; } }
+        public static int PacketCarDamageDataSize { get { return _instance.packetCarDamageDataSize; } }
+        public static int PacketSessionHistoryDataSize { get { return _instance.packetSessionHistoryDataSize; } }
         public static int BoolSize { get { return _instance.boolSize; } }
         public static int FloatSize { get { return _instance.floatSize; } }
         public static int IntSize { get { return _instance.intSize; } }
@@ -90,7 +95,7 @@ namespace Vision2020
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketHeader
     {
-        public UInt16 packetFormat;             // 2020
+        public UInt16 packetFormat;             // 2020 / 2021
         public byte gameMajorVersion;           // Game major version - "X.00"
         public byte gameMinorVersion;           // Game minor version - "1.XX"
         public byte packetVersion;              // Version of this packet type, all start from 1
@@ -103,10 +108,10 @@ namespace Vision2020
         // ADDED IN BETA 2: 
         public byte secondaryPlayerCarIndex;    // Index of secondary player's car in the array (splitscreen)
     }
-    #endregion  
+    #endregion
 
     #region Type 0: Motion 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct CarMotionData
     {
@@ -128,7 +133,7 @@ namespace Vision2020
         public float yaw;                      // Yaw angle in radians
         public float pitch;                    // Pitch angle in radians
         public float roll;                     // Roll angle in radians
-    };
+    }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketMotionData
@@ -160,15 +165,15 @@ namespace Vision2020
     #endregion
 
     #region Type 1: Session
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct MarshalZone
     {
         float zoneStart;   // Fraction (0..1) of way through the lap the marshal zone starts
         byte zoneFlag;    // -1 = invalid/unknown, 0 = none, 1 = green, 2 = blue, 3 = yellow, 4 = red
-    };
+    }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct WeatherForecastSample
     {
@@ -179,10 +184,13 @@ namespace Vision2020
         public byte weather;                         // Weather - 0 = clear, 1 = light cloud, 2 = overcast
                                                      // 3 = light rain, 4 = heavy rain, 5 = storm
         public byte trackTemperature;                // Track temp. in degrees celsius
-        public byte airTemperature;                  // Air temp. in degrees celsius
-    };
+        public byte trackTemperatureChange;        // Track temp. change – 0 = up, 1 = down, 2 = no change
+        public byte airTemperature;                // Air temp. in degrees celsius
+        public byte airTemperatureChange;          // Air temp. change – 0 = up, 1 = down, 2 = no change
+        public byte rainPercentage;                // Rain percentage (0-100)
+    }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketSessionData
     {
@@ -214,53 +222,66 @@ namespace Vision2020
         public byte numWeatherForecastSamples; // Number of weather samples to follow
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 20, ArraySubType = UnmanagedType.Struct)]
         public WeatherForecastSample[] weatherForecastSamples;   // Array of weather forecast samples
+        // added 2021
+        public byte forecastAccuracy;          // 0 = Perfect, 1 = Approximate
+        public byte aiDifficulty;              // AI Difficulty rating – 0-110
+        public UInt32 seasonLinkIdentifier;      // Identifier for season - persists across saves
+        public UInt32 weekendLinkIdentifier;     // Identifier for weekend - persists across saves
+        public UInt32 sessionLinkIdentifier;     // Identifier for session - persists across saves
+        public byte pitStopWindowIdealLap;     // Ideal lap to pit on for current strategy (player)
+        public byte pitStopWindowLatestLap;    // Latest lap to pit on for current strategy (player)
+        public byte pitStopRejoinPosition;     // Predicted position to rejoin at (player)
+        public byte steeringAssist;            // 0 = off, 1 = on
+        public byte brakingAssist;             // 0 = off, 1 = low, 2 = medium, 3 = high
+        public byte gearboxAssist;             // 1 = manual, 2 = manual & suggested gear, 3 = auto
+        public byte pitAssist;                 // 0 = off, 1 = on
+        public byte pitReleaseAssist;          // 0 = off, 1 = on
+        public byte ERSAssist;                 // 0 = off, 1 = on
+        public byte DRSAssist;                 // 0 = off, 1 = on
+        public byte dynamicRacingLine;         // 0 = off, 1 = corners only, 2 = full
+        public byte dynamicRacingLineType;     // 0 = 2D, 1 = 3D
+
     }
     #endregion
 
     #region Type 2: Lap Data
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct LapData
     {
-        public float lastLapTime;              // Last lap time in seconds
-        public float currentLapTime;           // Current time around the lap in seconds
-
-        //UPDATED in Beta 3:
-        public UInt16 sector1TimeInMS;         // Sector 1 time in milliseconds
-        public UInt16 sector2TimeInMS;         // Sector 2 time in milliseconds
-        public float bestLapTime;              // Best lap time of the session in seconds
-        public byte bestLapNum;                // Lap number best time achieved on
-        public UInt16 bestLapSector1TimeInMS;    // Sector 1 time of best lap in the session in milliseconds
-        public UInt16 bestLapSector2TimeInMS;    // Sector 2 time of best lap in the session in milliseconds
-        public UInt16 bestLapSector3TimeInMS;    // Sector 3 time of best lap in the session in milliseconds
-        public UInt16 bestOverallSector1TimeInMS;// Best overall sector 1 time of the session in milliseconds
-        public byte bestOverallSector1LapNum;    // Lap number best overall sector 1 time achieved on
-        public UInt16 bestOverallSector2TimeInMS;// Best overall sector 2 time of the session in milliseconds
-        public byte bestOverallSector2LapNum;    // Lap number best overall sector 2 time achieved on
-        public UInt16 bestOverallSector3TimeInMS;// Best overall sector 3 time of the session in milliseconds
-        public byte bestOverallSector3LapNum;    // Lap number best overall sector 3 time achieved on
-
-
-        public float lapDistance;               // Distance vehicle is around current lap in metres – could
-                                                // be negative if line hasn’t been crossed yet
-        public float totalDistance;             // Total distance travelled in session in metres – could
-                                                // be negative if line hasn’t been crossed yet
+        public UInt32 lastLapTimeInMS;            // Last lap time in milliseconds
+        public UInt32 currentLapTimeInMS;     // Current time around the lap in milliseconds
+        public UInt16 sector1TimeInMS;           // Sector 1 time in milliseconds
+        public UInt16 sector2TimeInMS;           // Sector 2 time in milliseconds
+        public float lapDistance;         // Distance vehicle is around current lap in metres – could
+                                          // be negative if line hasn’t been crossed yet
+        public float totalDistance;       // Total distance travelled in session in metres – could
+                                          // be negative if line hasn’t been crossed yet
         public float safetyCarDelta;            // Delta in seconds for safety car
-        public byte carPosition;                // Car race position
-        public byte currentLapNum;              // Current lap number
-        public byte pitStatus;                  // 0 = none, 1 = pitting, 2 = in pit area
-        public byte sector;                     // 0 = sector1, 1 = sector2, 2 = sector3
-        public byte currentLapInvalid;          // Current lap invalid - 0 = valid, 1 = invalid
-        public byte penalties;                  // Accumulated time penalties in seconds to be added
-        public byte gridPosition;               // Grid position the vehicle started the race in
-        public byte driverStatus;               // Status of driver - 0 = in garage, 1 = flying lap
-                                                // 2 = in lap, 3 = out lap, 4 = on track
-        public byte resultStatus;               // Result status - 0 = invalid, 1 = inactive, 2 = active
-                                                // 3 = finished, 4 = disqualified, 5 = not classified
-                                                // 6 = retired
+        public byte carPosition;             // Car race position
+        public byte currentLapNum;       // Current lap number
+        public byte pitStatus;               // 0 = none, 1 = pitting, 2 = in pit area
+        public byte numPitStops;                 // Number of pit stops taken in this race
+        public byte sector;                  // 0 = sector1, 1 = sector2, 2 = sector3
+        public byte currentLapInvalid;       // Current lap invalid - 0 = valid, 1 = invalid
+        public byte penalties;               // Accumulated time penalties in seconds to be added
+        public byte warnings;                  // Accumulated number of warnings issued
+        public byte numUnservedDriveThroughPens;  // Num drive through pens left to serve
+        public byte numUnservedStopGoPens;        // Num stop go pens left to serve
+        public byte gridPosition;            // Grid position the vehicle started the race in
+        public byte driverStatus;            // Status of driver - 0 = in garage, 1 = flying lap
+                                             // 2 = in lap, 3 = out lap, 4 = on track
+        public byte resultStatus;              // Result status - 0 = invalid, 1 = inactive, 2 = active
+                                               // 3 = finished, 4 = didnotfinish, 5 = disqualified
+                                               // 6 = not classified, 7 = retired
+        public byte pitLaneTimerActive;          // Pit lane timing, 0 = inactive, 1 = active
+        public UInt16 pitLaneTimeInLaneInMS;      // If active, the current time spent in the pit lane in ms
+        public UInt16 pitStopTimerInMS;           // Time of the actual pit stop in ms
+        public byte pitStopShouldServePen;   	 // Whether the car should serve a penalty at this stop
+
     };
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketLapData
     {
@@ -271,7 +292,7 @@ namespace Vision2020
     #endregion
 
     #region Type 3: EVent
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct FastestLap
     {
@@ -279,28 +300,28 @@ namespace Vision2020
         public float lapTime;    // Lap time is in seconds
     }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Retirement
     {
         public byte vehicleIdx; // Vehicle index of car retiring
     }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct TeamMateInPits
     {
         public byte vehicleIdx; // Vehicle index of team mate
     }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct RaceWinner
     {
         public byte vehicleIdx; // Vehicle index of the race winner
     }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct Penalty
     {
@@ -314,22 +335,59 @@ namespace Vision2020
         public byte placesGained;         // Number of places gained by this
     }
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct SpeedTrap
     {
         public byte vehicleIdx; // Vehicle index of the vehicle triggering speed trap
         public float speed;      // Top speed achieved in kilometres per hour
+        public byte overallFastestInSession;   // Overall fastest speed in session = 1, otherwise 0
+        public byte driverFastestInSession;    // Fastest speed for driver in session = 1, otherwise 0
     }
 
-    
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct StartLights
+    {
+        public byte vehicleIdx; // Vehicle index of the race winner
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct DriveThroughPenaltyServed
+    {
+        public byte vehicleIdx; // Vehicle index of the race winner
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct StopGoPenaltyServed
+    {
+        public byte vehicleIdx; // Vehicle index of the race winner
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct Flashback
+    {
+        public UInt32 flashbackFrameIdentifier;  // Frame identifier flashed back to
+        public float flashbackSessionTime;       // Session time flashed back to
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct Buttons
+    {
+        public UInt32 buttonStatus; // Vehicle index of the race winner
+    }
+
+
     public enum EventType
     {
-        Unknown, SessionStarted, SessionEnded, FastestLap, Retirement, DRSEnabled, DRSDisabled,
-        TeammateInPits, CheckeredFlag, RaceWinner, PenaltyIssued, SpeedTrapTriggered
+        Unknown, SessionStarted, SessionEnded,
+        FastestLap, Retirement, DRSEnabled, DRSDisabled,
+        TeammateInPits, CheckeredFlag, RaceWinner,
+        PenaltyIssued, SpeedTrapTriggered, StartLights,
+        DriveThroughPenaltyServed, StopGoPenaltyServed,
+        Flashback, Buttons
     }
 
-    
+
     public struct PacketEventData
     {
         public EventType eventStringCode; // Event string code, see below
@@ -339,12 +397,14 @@ namespace Vision2020
     #endregion
 
     #region Type 4: Participants
-    
+
     public struct ParticipantData
     {
         public byte aiControlled;           // Whether the vehicle is AI (1) or Human (0) controlled
         public byte driverId;               // Driver id - see appendix
+        public byte networkId;               // Network id – unique identifier for network players
         public byte teamId;                 // Team id - see appendix
+        public byte myTeam;                 // My team flag – 1 = My Team, 0 = otherwise
         public byte raceNumber;             // Race number of the car
         public byte nationality;            // Nationality of the driver
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
@@ -353,7 +413,6 @@ namespace Vision2020
         public byte yourTelemetry;          // The player's UDP setting, 0 = restricted, 1 = public
     }
 
-    
     public struct PacketParticipantsData
     {
         public byte numActiveCars;  // Number of active cars in the data – should match number of
@@ -364,18 +423,18 @@ namespace Vision2020
     #endregion
 
     #region Type 5: Car Setups
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct CarSetupData
     {
-        public byte m_frontWing;                // Front wing aero
-        public byte m_rearWing;                 // Rear wing aero
-        public byte m_onThrottle;               // Differential adjustment on throttle (percentage)
+        public byte frontWing;                // Front wing aero
+        public byte rearWing;                 // Rear wing aero
+        public byte onThrottle;               // Differential adjustment on throttle (percentage)
         public byte byteoffThrottle;              // Differential adjustment off throttle (percentage)
-        public float m_frontCamber;              // Front camber angle (suspension geometry)
-        public float m_rearCamber;               // Rear camber angle (suspension geometry)
-        public float m_frontToe;                 // Front toe angle (suspension geometry)
-        public float m_rearToe;                  // Rear toe angle (suspension geometry)
+        public float frontCamber;              // Front camber angle (suspension geometry)
+        public float rearCamber;               // Rear camber angle (suspension geometry)
+        public float frontToe;                 // Front toe angle (suspension geometry)
+        public float rearToe;                  // Rear toe angle (suspension geometry)
         public byte bytefrontSuspension;          // Front suspension
         public byte byterearSuspension;           // Rear suspension
         public byte bytefrontAntiRollBar;         // Front anti-roll bar
@@ -384,26 +443,26 @@ namespace Vision2020
         public byte byterearSuspensionHeight;     // Rear ride height
         public byte bytebrakePressure;            // Brake pressure (percentage)
         public byte bytebrakeBias;                // Brake bias (percentage)
-        public float m_rearLeftTyrePressure;     // Rear left tyre pressure (PSI)
-        public float m_rearRightTyrePressure;    // Rear right tyre pressure (PSI)
-        public float m_frontLeftTyrePressure;    // Front left tyre pressure (PSI)
-        public float m_frontRightTyrePressure;   // Front right tyre pressure (PSI)
+        public float rearLeftTyrePressure;     // Rear left tyre pressure (PSI)
+        public float rearRightTyrePressure;    // Rear right tyre pressure (PSI)
+        public float frontLeftTyrePressure;    // Front left tyre pressure (PSI)
+        public float frontRightTyrePressure;   // Front right tyre pressure (PSI)
         public byte byteballast;                  // Ballast
-        public float m_fuelLoad;                 // Fuel load
+        public float fuelLoad;                 // Fuel load
     };
 
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketCarSetupData
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22)]
-        public CarSetupData[] m_carSetups;
+        public CarSetupData[] carSetups;
     };
     #endregion
 
     #region Type 6: Car Telemetry
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct CarTelemetryData
     {
@@ -416,6 +475,7 @@ namespace Vision2020
         public UInt16 engineRPM;                  // Engine RPM
         public byte drs;                          // 0 = off, 1 = on
         public byte revLightsPercent;             // Rev lights indicator (percentage)
+        public UInt16 m_revLightsBitValue;        // Rev lights (bit 0 = leftmost LED, bit 14 = rightmost LED)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public UInt16[] brakesTemperature;          // Brakes temperature (celsius)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
@@ -429,16 +489,13 @@ namespace Vision2020
         public byte[] surfaceType;                // Driving surface, see appendices
     };
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketCarTelemetryData
     {
 
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22)]
         public CarTelemetryData[] carTelemetryData;
-
-        public UInt32 buttonStatus;   // Bit flags specifying which buttons are being pressed
-                                      // currently - see appendices
 
         // Added in Beta 3:
         public byte mfdPanelIndex;   // Index of MFD panel open - 255 = MFD closed
@@ -452,7 +509,7 @@ namespace Vision2020
     #endregion
 
     #region Type 7: Car Status
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct CarStatusData
     {
@@ -474,8 +531,6 @@ namespace Vision2020
         public UInt16 drsActivationDistance;  // 0 = DRS not available, non-zero - DRS will be available
                                               // in [X] metres
 
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] tyresWear;             // Tyre wear percentage
         public byte actualTyreCompound;      // F1 Modern - 16 = C5, 17 = C4, 18 = C3, 19 = C2, 20 = C1
                                              // 7 = inter, 8 = wet
                                              // F1 Classic - 9 = dry, 10 = wet
@@ -486,17 +541,7 @@ namespace Vision2020
                                              // F1 Classic – same as above
                                              // F2 – same as above
         public byte tyresAgeLaps;            // Age in laps of the current set of tyres
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
-        public byte[] tyresDamage;           // Tyre damage (percentage)
-        public byte frontLeftWingDamage;     // Front left wing damage (percentage)
-        public byte frontRightWingDamage;    // Front right wing damage (percentage)
-        public byte rearWingDamage;          // Rear wing damage (percentage)
 
-        // Added Beta 3:
-        public byte drsFault;                // Indicator for DRS fault, 0 = OK, 1 = fault
-
-        public byte engineDamage;            // Engine damage (percentage)
-        public byte gearBoxDamage;           // Gear box damage (percentage)
         public byte vehicleFiaFlags;         // -1 = invalid/unknown, 0 = none, 1 = green
                                              // 2 = blue, 3 = yellow, 4 = red
         public float ersStoreEnergy;         // ERS energy store in Joules
@@ -505,9 +550,12 @@ namespace Vision2020
         public float ersHarvestedThisLapMGUK;  // ERS energy harvested this lap by MGU-K
         public float ersHarvestedThisLapMGUH;  // ERS energy harvested this lap by MGU-H
         public float ersDeployedThisLap;       // ERS energy deployed this lap
+        // added 2021
+        public byte networkPaused;            // Whether the car is paused in a network game
+
     };
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketCarStatusData
     {
@@ -517,7 +565,7 @@ namespace Vision2020
     #endregion
 
     #region Type 8: Final Classification
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct FinalClassificationData
     {
@@ -529,7 +577,7 @@ namespace Vision2020
         public byte resultStatus;          // Result status - 0 = invalid, 1 = inactive, 2 = active
                                            // 3 = finished, 4 = disqualified, 5 = not classified
                                            // 6 = retired
-        public float bestLapTime;          // Best lap time of the session in seconds
+        public UInt32 bestLapTime;         // Best lap time of the session in seconds
         public double totalRaceTime;       // Total race time in seconds without penalties
         public byte penaltiesTime;         // Total penalties accumulated in seconds
         public byte numPenalties;          // Number of penalties applied to this driver
@@ -540,7 +588,7 @@ namespace Vision2020
         public byte[] tyreStintsVisual;    // Visual tyres used by this driver
     };
 
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketFinalClassificationData
     {
@@ -551,7 +599,7 @@ namespace Vision2020
     #endregion
 
     #region Type 8: Lobby Info
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct LobbyInfoData
     {
@@ -559,10 +607,11 @@ namespace Vision2020
         public byte teamId;                  // Team id - see appendix (255 if no team currently selected)
         public byte nationality;             // Nationality of the driver
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
-        public char[] m_name;                // Name of participant in UTF-8 format – null terminated
-                                             // Will be truncated with ... (U+2026) if too long
+        public char[] name;                // Name of participant in UTF-8 format – null terminated
+                                           // Will be truncated with ... (U+2026) if too long
+        public byte carNumber;               // Car number of the player
         public byte readyStatus;             // 0 = not ready, 1 = ready, 2 = spectating
-    };
+    }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct PacketLobbyInfoData
@@ -571,7 +620,7 @@ namespace Vision2020
         public byte numPlayers;                    // Number of players in the lobby data
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22)]
         public LobbyInfoData[] lobbyPlayers;
-    };
+    }
     #endregion
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -595,4 +644,83 @@ namespace Vision2020
         public PacketHeader context;
     }
 
+    #region Type 10: Car Damage
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct PacketCarDamageData
+    {
+        public PacketHeader header;               // Header
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22, ArraySubType = UnmanagedType.Struct)]
+        public CarDamageData[] carDamageData;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct CarDamageData
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public float[] tyresWear;                     // Tyre wear (percentage)
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] tyresDamage;                   // Tyre damage (percentage)
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
+        public byte[] brakesDamage;                  // Brakes damage (percentage)
+        public byte frontLeftWingDamage;              // Front left wing damage (percentage)
+        public byte frontRightWingDamage;             // Front right wing damage (percentage)
+        public byte rearWingDamage;                   // Rear wing damage (percentage)
+        public byte floorDamage;                      // Floor damage (percentage)
+        public byte diffuserDamage;                   // Diffuser damage (percentage)
+        public byte sidepodDamage;                    // Sidepod damage (percentage)
+        public byte drsFault;                         // Indicator for DRS fault, 0 = OK, 1 = fault
+        public byte gearBoxDamage;                    // Gear box damage (percentage)
+        public byte engineDamage;                     // Engine damage (percentage)
+        public byte engineMGUHWear;                   // Engine wear MGU-H (percentage)
+        public byte engineESWear;                     // Engine wear ES (percentage)
+        public byte engineCEWear;                     // Engine wear CE (percentage)
+        public byte engineICEWear;                    // Engine wear ICE (percentage)
+        public byte engineMGUKWear;                   // Engine wear MGU-K (percentage)
+        public byte engineTCWear;                     // Engine wear TC (percentage)
+                                                      // Name of participant in UTF-8 format – null terminated
+    }
+    #endregion
+
+    #region Type 11: Session History
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct LapHistoryData
+    {
+        public UInt32 lapTimeInMS;           // Lap time in milliseconds
+        public UInt16 sector1TimeInMS;       // Sector 1 time in milliseconds
+        public UInt16 sector2TimeInMS;       // Sector 2 time in milliseconds
+        public UInt16 sector3TimeInMS;       // Sector 3 time in milliseconds
+        public byte lapValidBitFlags;      // 0x01 bit set-lap valid,      0x02 bit set-sector 1 valid
+                                           // 0x04 bit set-sector 2 valid, 0x08 bit set-sector 3 valid
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct TyreStintHistoryData
+    {
+        public byte endLap;                // Lap the tyre usage ends on (255 of current tyre)
+        public byte tyreActualCompound;    // Actual tyres used by this driver
+        public byte tyreVisualCompound;    // Visual tyres used by this driver
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    struct PacketSessionHistoryData
+    {
+        PacketHeader header;                   // Header
+
+        public byte carIdx;                   // Index of the car this lap data relates to
+        public byte numLaps;                  // Num laps in the data (including current partial lap)
+        public byte numTyreStints;            // Number of tyre stints in the data
+
+        public byte bestLapTimeLapNum;        // Lap the best lap time was achieved on
+        public byte bestSector1LapNum;        // Lap the best Sector 1 time was achieved on
+        public byte bestSector2LapNum;        // Lap the best Sector 2 time was achieved on
+        public byte bestSector3LapNum;        // Lap the best Sector 3 time was achieved on
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 100, ArraySubType = UnmanagedType.Struct)]
+        public LapHistoryData[] lapHistoryData;   // 100 laps of data max
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8, ArraySubType = UnmanagedType.Struct)]
+        public TyreStintHistoryData[] tyreStintsHistoryData;
+    }
+    #endregion
 }

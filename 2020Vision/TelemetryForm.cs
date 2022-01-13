@@ -11,7 +11,7 @@ namespace Vision2020
     public partial class TelemetryForm : Form, AsyncUI
     {
         // statistics
-        public int[] packetCount = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        public int[] packetCount = new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         public int[] UpdateCount = new int[] { 0, 0 };
         public TimeSpan[] UpdateTime = new TimeSpan[] { new TimeSpan(0), new TimeSpan(0) };
         public PlayerInfo selectedPlayer = null;
@@ -77,9 +77,9 @@ namespace Vision2020
             }
         }
 
-        private String TS(float time)
+        private String TS(UInt32 time)
         {
-            return PacketHelper.UnixTimeStampToDateTime(time).ToString("mm.ss.fff");
+            return TimeSpan.FromMilliseconds(time).ToString("mm.ss.fff");
         }
 
         private void DriverListBox_Paint(object sender, PaintEventArgs e)
@@ -735,7 +735,10 @@ namespace Vision2020
                         //}
                         LogLine($"Loaded {lap.FileName}");
                     }
-                    lock(sessionInfo = new SessionInfo(selectedLaps));
+                    lock (sessionInfo)
+                    {
+                        sessionInfo = new SessionInfo(selectedLaps);
+                    }
                     DrawTelemetryBitmap();
                     replayTimer.Enabled = true;
                 }
@@ -1002,7 +1005,7 @@ namespace Vision2020
 
                                     // if { ti.bestLapNum}={ TS(ti.bestLapTime)}
                                     LogLine($" {lap.Key} {(lap.Value.valid ? "OK" : "--")} {(lap.Value.complete ? "OK" : "--")}" +
-                                        $" current {ti.currentLapNum}={TS(ti.currentLapTime)}"+
+                                        $" current {ti.currentLapNum}={TS(ti.currentLapTimeInMS)}"+
                                         $" {ti.driverStatus} {ti.currentLapInvalid} {ti.resultStatus} {ti.lapDistance} {ti.totalDistance}"+
                                         $" ({lap.Value.lapTelemetry.Count}) ");
                                 }

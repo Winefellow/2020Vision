@@ -125,7 +125,7 @@ namespace Vision2020
                 Marshal.StructureToPtr(o, ptr, true);
                 Marshal.Copy(ptr, arr, 0, size);
             }
-            catch (Exception e)
+            catch // (Exception e)
             {
                 throw;
             }
