@@ -298,7 +298,12 @@ namespace Vision2020
 
         public static void LoadDictionary(AsyncUI mainWindow)
         {
-            String json = File.ReadAllText(BS(baseDir) + dictFileName);
+            String json = "[]";
+            if (File.Exists(BS(baseDir) + dictFileName))
+            {
+                json = File.ReadAllText(BS(baseDir) + dictFileName);
+
+            }
             Laps = JsonSerializer.Deserialize<List<LapInfo>>(json);
 
             int i = Laps.Count;
