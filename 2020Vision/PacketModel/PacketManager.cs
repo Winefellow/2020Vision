@@ -161,26 +161,56 @@ namespace Vision2020
 
         public static EventType GetEventType(Stream dataStream)
         {
+            //	“SSTA”	Session Started	Sent when the session starts
+            //	“SEND”	Session Ended	Sent when the session ends
+            //	“FTLP”	Fastest Lap	When a driver achieves the fastest lap
+            //	“RTMT”	Retirement	When a driver retires
+            //	“DRSE”	DRS enabled	Race control have enabled DRS
+            //	“DRSD”	DRS disabled	Race control have disabled DRS
+            //	“TMPT”	Team mate in pits	Your team mate has entered the pits
+            //	“CHQF”	Chequered flag	The chequered flag has been waved
+            //	“RCWN”	Race Winner	The race winner is announced
+            //	“PENA”	Penalty Issued	A penalty has been issued – details in event
+            //	“SPTP”	Speed Trap Triggered	Speed trap has been triggered by fastest speed
+            //	“STLG”	Start lights	Start lights – number shown
+            //	“LGOT”	Lights out	Lights out
+            //	“DTSV”	Drive through served	Drive through penalty served
+            //	“SGSV”	Stop go served	Stop go penalty served
+            //	“FLBK”	Flashback	Flashback activated
+            //	“BUTN”	Button status	Button status changed
+
             byte[] data = new byte[4];
             int read = dataStream.Read(data, 0, 4);
 
-            if ( data[0] == 'S') //   Session Started “SSTA”	Sent when the session starts
-                                 //   Session Ended   “SEND”	Sent when the session ends
-                                 // Speed Trap Triggered	“SPTP”	Speed trap has been triggered by fastest speed
+            if ( data[0] == 'S') 
             {
-                if (data[1] == 'S')
+                if (data[1] == 'S')  //   Session Started “SSTA”	Sent when the session starts
                 {
                     return EventType.SessionStarted;
                 }
-                if (data[1] == 'E')
+                if (data[1] == 'E')  //   Session Ended   “SEND”	Sent when the session 
                 {
                     return EventType.SessionEnded;
                 }
-                return EventType.SpeedTrapTriggered;
+                if (data[1] == 'P')  //   “SPTP”	Speed Trap Triggered
+                {
+                    return EventType.SpeedTrapTriggered;
+                }
+                if (data[1] == 'G')  //	“SGSV”	Stop go served	Stop go penalty served
+                {
+                    return EventType.StopGoPenaltyServed;
+                }
+                //	“STLG”	Start lights	Start lights – number shown
+                return EventType.StartLights;
             }
             else if (data[0] == 'F') // Fastest Lap “FTLP”	When a driver achieves the fastest lap
             {
+                if (data[1] == 'L')  //	“FLBK”	Flashback	Flashback activated
+                {
+                    return EventType.Flashback;
+                }
                 return EventType.FastestLap;
+                
             }
             else if (data[0] == 'R') // Retirement  “RTMT”	When a driver retires
             {
@@ -198,7 +228,12 @@ namespace Vision2020
                 {
                     return EventType.DRSEnabled;
                 }
-                return EventType.DRSDisabled;
+                if (data[3] == 'D')
+                {
+                    return EventType.DRSDisabled;
+                }
+                //	“DTSV”	Drive through served	Drive through penalty served
+                return EventType.DriveThroughPenaltyServed;
             }
             else if (data[0] == 'T') // Team mate in pits   “TMPT”	Your team mate has entered the pits
             {
@@ -211,6 +246,14 @@ namespace Vision2020
             else if (data[0] == 'P') // Penalty Issued  “PENA”	A penalty has been issued – details in event
             {
                 return EventType.PenaltyIssued;
+            }
+            else if (data[0] == 'L') //	“LGOT”	Lights out	Lights out
+            {
+                return EventType.LightsOut;
+            }
+            else if (data[0] == 'B')  //	“BUTN”	Button status	Button status changed
+            {
+                return EventType.Buttons;
             }
             return EventType.Unknown;
         }
@@ -231,7 +274,10 @@ namespace Vision2020
         {
             // Unix timestamp is seconds past epoch
             System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            if (unixTimeStamp > 0)
+            {
+                dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            }
             return dtDateTime;
         }
     }

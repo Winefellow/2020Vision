@@ -148,17 +148,18 @@ namespace Vision2020
                 return;
             }
             // callBack.Log($"{packet.header.frameIdentifier}-");
-            while (packet.header.packetFormat == 0 && packet.header.frameIdentifier == 0)
+
+            while (packet.header.frameIdentifier == 0 && packet.header.packetFormat != 2021)
             {
                 // empty packet?
                 packet.header = PacketHelper.SafeRead<PacketHeader>(fIn, PacketSize.PacketHeaderSize);
             }
 
-            if (packet.header.packetFormat != 2020 && packet.header.packetFormat != 2021)
-            {
-                callBack.LogLine($"FATAL: Invalid packet format: last Packet {packet.header.packetFormat}");
-                throw new Exception($"Invalid packet format: last Packet {packet.header.packetFormat}");
-            }
+            //if (packet.header.packetFormat != 2020 && packet.header.packetFormat != 2021)
+            //{
+            //    callBack.LogLine($"FATAL: Invalid packet format: last Packet {packet.header.packetFormat}");
+            //    //throw new Exception($"Invalid packet format: last Packet {packet.header.packetFormat}");
+            //}
 
             if (ReaderMode == ReaderMode.rmReplay)
             {
@@ -218,8 +219,8 @@ namespace Vision2020
                         };
                         packet.details = ped;
                         // Depending on type of event the contents may differ. In C++ this is a union. Therefore the largest packetsize is the size.
-                        byte[] data = new byte[PacketSize.PenaltySize];
-                        if (fIn.Read(data, 0, PacketSize.PenaltySize) != PacketSize.PenaltySize)
+                        byte[] data = new byte[PacketSize.FlashbackSize];
+                        if (fIn.Read(data, 0, PacketSize.FlashbackSize) != PacketSize.FlashbackSize)
                         {
                             throw new Exception("Size error");
                         }

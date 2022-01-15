@@ -38,6 +38,7 @@ namespace Vision2020
         private int teamMateInPitsSize = new SizeInfo<TeamMateInPits>().Size;
         private int raceWinnerSize = new SizeInfo<RaceWinner>().Size;
         private int penaltySize = new SizeInfo<Penalty>().Size;
+        private int flashbackSize = new SizeInfo<Flashback>().Size;
         private int packetSessionDataSize = new SizeInfo<PacketSessionData>().Size;
         private int packetParticipantsDataSize = new SizeInfo<PacketParticipantsData>().Size;
         private int packetCarSetupDataSize = new SizeInfo<PacketCarSetupData>().Size;
@@ -53,6 +54,9 @@ namespace Vision2020
         private int boolSize = new SizeInfo<bool>().Size;
         private int floatSize = new SizeInfo<float>().Size;
         private int intSize = new SizeInfo<int>().Size;
+        private int byteSize = new SizeInfo<byte>().Size;
+        private int uInt16Size = new SizeInfo<UInt16>().Size;
+        private int uInt32Size = new SizeInfo<UInt32>().Size;
         private int lapDataSize = new SizeInfo<LapData>().Size;
         private int carMotionSize = new SizeInfo<CarMotionData>().Size;
         private int carTelemetrySize = new SizeInfo<CarTelemetryData>().Size;
@@ -70,7 +74,8 @@ namespace Vision2020
         public static int TeamMateInPitsSize { get { return _instance.teamMateInPitsSize; } }
         public static int RaceWinnerSize { get { return _instance.raceWinnerSize; } }
         public static int PenaltySize { get { return _instance.penaltySize; } }
-        public static int PacketSessionDataSize { get { return _instance.packetSessionDataSize; } }
+        public static int FlashbackSize { get { return _instance.flashbackSize; } }
+            public static int PacketSessionDataSize { get { return _instance.packetSessionDataSize; } }
         public static int PacketParticipantsDataSize { get { return _instance.packetParticipantsDataSize; } }
         public static int PacketCarSetupDataSize { get { return _instance.packetCarSetupDataSize; } }
         public static int PacketCarTelemetryDataSize { get { return _instance.packetCarTelemetryDataSize; } }
@@ -84,6 +89,9 @@ namespace Vision2020
         public static int BoolSize { get { return _instance.boolSize; } }
         public static int FloatSize { get { return _instance.floatSize; } }
         public static int IntSize { get { return _instance.intSize; } }
+        public static int ByteSize { get { return _instance.byteSize; } }
+        public static int UInt16Size { get { return _instance.uInt16Size; } }
+        public static int UInt32Size { get { return _instance.uInt32Size; } }
         public static int LapDataSize { get { return _instance.lapDataSize; } }
         public static int CarMotionSize { get { return _instance.carMotionSize; } }
         public static int CarTelemetrySize { get { return _instance.carTelemetrySize; } }
@@ -385,7 +393,7 @@ namespace Vision2020
         TeammateInPits, CheckeredFlag, RaceWinner,
         PenaltyIssued, SpeedTrapTriggered, StartLights,
         DriveThroughPenaltyServed, StopGoPenaltyServed,
-        Flashback, Buttons
+        LightsOut, Flashback, Buttons
     }
 
 
@@ -649,8 +657,6 @@ namespace Vision2020
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct PacketCarDamageData
     {
-        public PacketHeader header;               // Header
-
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 22, ArraySubType = UnmanagedType.Struct)]
         public CarDamageData[] carDamageData;
     }
@@ -678,8 +684,7 @@ namespace Vision2020
         public byte engineCEWear;                     // Engine wear CE (percentage)
         public byte engineICEWear;                    // Engine wear ICE (percentage)
         public byte engineMGUKWear;                   // Engine wear MGU-K (percentage)
-        public byte engineTCWear;                     // Engine wear TC (percentage)
-                                                      // Name of participant in UTF-8 format – null terminated
+        public byte engineTCWear;                     // Engine wear TC (percentage)                                                      
     }
     #endregion
 
@@ -707,8 +712,6 @@ namespace Vision2020
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     struct PacketSessionHistoryData
     {
-        PacketHeader header;                   // Header
-
         public byte carIdx;                   // Index of the car this lap data relates to
         public byte numLaps;                  // Num laps in the data (including current partial lap)
         public byte numTyreStints;            // Number of tyre stints in the data

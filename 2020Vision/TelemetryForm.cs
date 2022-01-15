@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -755,7 +756,7 @@ namespace Vision2020
             if (Reset())
             {
                 LapSelect ls = new LapSelect();
-                if (ls.ShowDialog() == DialogResult.OK && ls.GetSelectedLaps().Count>0)
+                if (ls.ShowDialog() == DialogResult.OK && ls.GetSelectedLaps() != null && ls.GetSelectedLaps().Count>0)
                 {
                     selectedLaps = new List<LapAnalyzer>();
                     lapLineBox.Visible = true;
@@ -764,47 +765,58 @@ namespace Vision2020
                         try
                         {
                             lap.LoadDetails();
-                            selectedLaps.Add(new LapAnalyzer()
+                            if (lap.Details == null || lap.Details.lap == null)
                             {
-                                lapInfo = lap,
-                                motionIndex = 0,
-                                offset = DateTime.Now - PacketHelper.UnixTimeStampToDateTime(lap.Details.lap.lapMotion.First().context.sessionTime),
-                                telemetryIndex = 0
-                            });
-                            var lapInfo = lap.Details.lap.lapData[0].lapData;
-                            // LogLine($"0 Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
-                            //foreach (var lapTimings in lap.Details.lap.lapData)
-                            //{
-                            //    if ((lapTimings.lapData.driverStatus != lapInfo.driverStatus) ||
-                            //       (lapTimings.lapData.resultStatus != lapInfo.resultStatus) ||
-                            //       (lapTimings.lapData.sector != lapInfo.sector) ||
-                            //       (lapTimings.lapData.currentLapNum != lapInfo.currentLapNum) ||
-                            //       (lapTimings.lapData.currentLapInvalid != lapInfo.currentLapInvalid))
-                            //    {
-                            //        lapInfo = lapTimings.lapData;
-                            //        LogLine($"{lapTimings.context.frameIdentifier} Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
-                            //    }
-                            //}
-                            LogLine($"Loaded {lap.FileName}");
-                            CarSetupData su = lap.Details.lap.Setup;
-                            String setupData = $"Bal:{su.byteballast} Brake{su.bytebrakeBias}%{su.bytebrakePressure}";
-                            setupData = setupData + $" susp:{su.bytefrontSuspension}+{su.bytefrontSuspensionHeight}|{su.bytefrontAntiRollBar}/{su.byterearAntiRollBar}|{su.byterearSuspension}+{su.byterearSuspensionHeight}";
-                            setupData = setupData + $" Thr:On{su.byteoffThrottle}/Off{su.byteoffThrottle}";
-                            setupData = setupData + $" CamToe:F{su.m_frontCamber}/{su.m_frontToe} R{su.m_rearCamber}/{su.m_rearToe}";
-                            setupData = setupData + $" TP:F{su.m_frontLeftTyrePressure}/{su.m_frontRightTyrePressure} R{su.m_rearLeftTyrePressure}/{su.m_rearRightTyrePressure}";
-                            setupData = setupData + $" W:F{su.m_frontWing}R{su.m_rearWing}";
-                            setupData = setupData + $" F:{su.m_fuelLoad}L";
+                                LogLine($"Invalid lap ignored and deleted {lap.LastError} - {lap.FileName}");
+                                File.Delete(lap.FileName);
+                            }
+                            else
+                            {
+                                selectedLaps.Add(new LapAnalyzer()
+                                {
+                                    lapInfo = lap,
+                                    motionIndex = 0,
+                                    offset = DateTime.Now - PacketHelper.UnixTimeStampToDateTime(lap.Details.lap.lapMotion.First().context.sessionTime),
+                                    telemetryIndex = 0
+                                });
+                                var lapInfo = lap.Details.lap.lapData[0].lapData;
+                                // LogLine($"0 Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
+                                //foreach (var lapTimings in lap.Details.lap.lapData)
+                                //{
+                                //    if ((lapTimings.lapData.driverStatus != lapInfo.driverStatus) ||
+                                //       (lapTimings.lapData.resultStatus != lapInfo.resultStatus) ||
+                                //       (lapTimings.lapData.sector != lapInfo.sector) ||
+                                //       (lapTimings.lapData.currentLapNum != lapInfo.currentLapNum) ||
+                                //       (lapTimings.lapData.currentLapInvalid != lapInfo.currentLapInvalid))
+                                //    {
+                                //        lapInfo = lapTimings.lapData;
+                                //        LogLine($"{lapTimings.context.frameIdentifier} Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
+                                //    }
+                                //}
+                                LogLine($"Loaded {lap.FileName}");
+                                CarSetupData su = lap.Details.lap.Setup;
+                                String setupData = $"Bal:{su.byteballast} Brake{su.bytebrakeBias}%{su.bytebrakePressure}";
+                                setupData = setupData + $" susp:{su.bytefrontSuspension}+{su.bytefrontSuspensionHeight}|{su.bytefrontAntiRollBar}/{su.byterearAntiRollBar}|{su.byterearSuspension}+{su.byterearSuspensionHeight}";
+                                setupData = setupData + $" Thr:On{su.byteoffThrottle}/Off{su.byteoffThrottle}";
+                                setupData = setupData + $" CamToe:F{su.frontCamber}/{su.frontToe} R{su.rearCamber}/{su.rearToe}";
+                                setupData = setupData + $" TP:F{su.frontLeftTyrePressure}/{su.frontRightTyrePressure} R{su.rearLeftTyrePressure}/{su.rearRightTyrePressure}";
+                                setupData = setupData + $" W:F{su.frontWing}R{su.rearWing}";
+                                setupData = setupData + $" F:{su.fuelLoad}L";
 
-                            LogLine($"  Setup " + setupData);
+                                LogLine($"  Setup " + setupData);
+                            }
                         }
                         catch (Exception ex)
                         {
                             LogLine("Error loading: " + ex.Message);
                         }
                     }
-                    sessionInfo = new SessionInfo(selectedLaps);
-                    DrawTelemetryBitmap();
-                    replayTimer.Enabled = true;
+                    if (selectedLaps.Count > 0)
+                    {
+                        sessionInfo = new SessionInfo(selectedLaps);
+                        DrawTelemetryBitmap();
+                        replayTimer.Enabled = true;
+                    }
                 }
             }
         }

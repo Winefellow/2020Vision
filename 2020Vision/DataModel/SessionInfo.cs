@@ -43,8 +43,9 @@ namespace Vision2020
                 i++;
             }
             participantsData.numActiveCars = (byte) i;
-            Update(participantsData);
+            Update(participantsData, true);
             i = 0;
+            
             foreach (var lap in lapData)
             {
                 var player = GetPlayerByIndex(i);
@@ -53,7 +54,7 @@ namespace Vision2020
             }
         }
 
-        public void Update(PacketParticipantsData data)
+        public void Update(PacketParticipantsData data,bool addAlways = false)
         {
             participantsData = data;
             if (circuit != null)
@@ -74,7 +75,7 @@ namespace Vision2020
                     {
                         var player = GetPlayerByDriverID(participant.driverId);
 
-                        if (player == null)
+                        if (player == null || addAlways)
                         {
                             playerInfo[participantIndex] = new PlayerInfo(participant, participantIndex);
                         }
@@ -214,13 +215,11 @@ namespace Vision2020
 
                         if (currentLapNum[i] >= 0 && playerData != null)
                         {
-                            playerData.AddSetupData(currentLapNum[i], context, data.m_carSetups[i]);
+                            playerData.AddSetupData(currentLapNum[i], context, data.carSetups[i]);
                         }
                     }
                 }
             }
         }
-        
-
     }
 }

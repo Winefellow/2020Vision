@@ -232,7 +232,7 @@ namespace Vision2020
             if (currentLapIndex == lapNumber)
             {
                 LapRecording rec = GetLap(lapNumber);
-                if (carSetupData.m_fuelLoad>0)
+                if (carSetupData.fuelLoad>0)
                     rec.Setup = carSetupData;
             }
         }

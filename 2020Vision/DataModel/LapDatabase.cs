@@ -84,6 +84,15 @@ namespace Vision2020
 
             MemoryStream fIn = new MemoryStream(data);
 
+
+            int version = PacketHelper.SafeRead<int>(fIn, PacketSize.IntSize);
+
+            if (version != 211)
+            {
+                // Invalid;
+                return;
+            }
+
             lap = new LapRecording()
             {
                 lapTelemetry = new List<TelemetryInContext>(),
@@ -95,7 +104,15 @@ namespace Vision2020
             playerInfo = PacketHelper.SafeRead<ParticipantData>(fIn, PacketSize.ParticipantDataSize);
             lap.complete = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.FirstTiming = PacketHelper.SafeRead<LapData>(fIn, PacketSize.LapDataSize);
-            lap.lapTimeInMs = PacketHelper.SafeRead<UInt32>(fIn, PacketSize.FloatSize);
+            if (version == 210)
+            {
+                var lapTimeAsFloat = PacketHelper.SafeRead<float>(fIn, PacketSize.FloatSize);
+                lap.lapTimeInMs = (UInt32) Math.Round(lapTimeAsFloat * 1000f, 0);
+            }
+            else
+            {
+                lap.lapTimeInMs = PacketHelper.SafeRead<UInt32>(fIn, PacketSize.UInt32Size);
+            }
             lap.started = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.valid = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.Setup = PacketHelper.SafeRead<CarSetupData>(fIn, PacketSize.CarSetupDataSize);
@@ -127,12 +144,14 @@ namespace Vision2020
             var fileName = BS(baseDir) + Pathname();
             Stream fOut = new FileStream(fileName, FileMode.Create, FileAccess.Write);
 
+            PacketHelper.SafeWrite<int>(fOut,211, PacketSize.IntSize); // Version Number
+
             PacketHelper.SafeWrite<PacketSessionData>(fOut, circuitInfo, PacketSize.PacketSessionDataSize);
             PacketHelper.SafeWrite<ParticipantData>(fOut, playerInfo, PacketSize.ParticipantDataSize);
 
             PacketHelper.SafeWrite<bool>(fOut, lap.complete, PacketSize.BoolSize);
             PacketHelper.SafeWrite<LapData>(fOut, lap.FirstTiming, PacketSize.LapDataSize);
-            PacketHelper.SafeWrite<float>(fOut, lap.lapTime, PacketSize.IntSize);
+            PacketHelper.SafeWrite<UInt32>(fOut, lap.lapTimeInMs, PacketSize.UInt32Size);
             PacketHelper.SafeWrite<bool>(fOut, lap.started, PacketSize.BoolSize);
             PacketHelper.SafeWrite<bool>(fOut, lap.valid, PacketSize.BoolSize);
             PacketHelper.SafeWrite<CarSetupData>(fOut, lap.Setup, PacketSize.CarSetupDataSize);
