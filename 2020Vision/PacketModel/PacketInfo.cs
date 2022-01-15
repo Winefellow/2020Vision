@@ -59,6 +59,7 @@ namespace Vision2020
         private int telemetryInContextSize = new SizeInfo<TelemetryInContext>().Size;
         private int motionInContextSize = new SizeInfo<MotionInContext>().Size;
         private int lapDataInContextSize = new SizeInfo<LapDataInContext>().Size;
+        private int carSetupDataSize = new SizeInfo<CarSetupData>().Size;
 
         // For (a tiny bit of) speed wins, calculate packet size only once at startup
         public static int PacketHeaderSize { get { return _instance.packetHeaderSize; } }
@@ -89,7 +90,7 @@ namespace Vision2020
         public static int TelemetryInContextSize { get { return _instance.telemetryInContextSize; } }
         public static int MotionInContextSize { get { return _instance.motionInContextSize; } }
         public static int LapDataInContextSize { get { return _instance.lapDataInContextSize; } }
-
+        public static int CarSetupDataSize { get { return _instance.carSetupDataSize; } }
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

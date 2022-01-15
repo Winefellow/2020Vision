@@ -46,6 +46,7 @@ namespace Vision2020
             this.RecordButton = new System.Windows.Forms.Button();
             this.replayButton = new System.Windows.Forms.Button();
             this.playerInfoBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            this.clickTimer = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.driverListBox)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.circuitBoxBG)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.lapLineBox)).BeginInit();
@@ -64,6 +65,7 @@ namespace Vision2020
             this.driverListBox.TabStop = false;
             this.driverListBox.Click += new System.EventHandler(this.DriverListBox_Click);
             this.driverListBox.Paint += new System.Windows.Forms.PaintEventHandler(this.DriverListBox_Paint);
+            this.driverListBox.Resize += new System.EventHandler(this.driverListBox_Resize);
             // 
             // tbLog
             // 
@@ -155,7 +157,11 @@ namespace Vision2020
             this.circuitBox.Size = new System.Drawing.Size(930, 395);
             this.circuitBox.TabIndex = 19;
             this.circuitBox.TabStop = false;
+            this.circuitBox.Click += new System.EventHandler(this.circuitBox_Click);
             this.circuitBox.Paint += new System.Windows.Forms.PaintEventHandler(this.circuitBox_Paint);
+            this.circuitBox.MouseDown += new System.Windows.Forms.MouseEventHandler(this.circuitBox_MouseDown);
+            this.circuitBox.MouseUp += new System.Windows.Forms.MouseEventHandler(this.circuitBox_MouseUp_1);
+            this.circuitBox.Resize += new System.EventHandler(this.circuitBox_Resize);
             // 
             // btnAddCompareLap
             // 
@@ -200,6 +206,11 @@ namespace Vision2020
             // playerInfoBindingSource
             // 
             this.playerInfoBindingSource.DataSource = typeof(Vision2020.PlayerInfo);
+            // 
+            // clickTimer
+            // 
+            this.clickTimer.Interval = 5;
+            this.clickTimer.Tick += new System.EventHandler(this.clickTimer_Tick);
             // 
             // TelemetryForm
             // 
@@ -251,6 +262,7 @@ namespace Vision2020
         private System.Windows.Forms.Button Analyze;
         private System.Windows.Forms.Button RecordButton;
         private System.Windows.Forms.Button replayButton;
+        private System.Windows.Forms.Timer clickTimer;
     }
 }
 

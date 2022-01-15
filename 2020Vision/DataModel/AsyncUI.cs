@@ -14,6 +14,7 @@ namespace Vision2020
         void UpdatePaticipants(PacketParticipantsData participantsData);
         void UpdateSession(PacketHeader header, PacketSessionData sessionData);
         void UpdateLapdata(PacketHeader context, PacketLapData lapData);
+        void UpdateSetup(PacketHeader context, PacketCarSetupData setupData);
         void UpdateTelemetry(PacketHeader context, PacketCarTelemetryData telemetryData);
         void AddPacket(PacketInfo Packet);
         void StartSession(PacketHeader data);
