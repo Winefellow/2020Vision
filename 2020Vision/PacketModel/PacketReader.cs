@@ -35,8 +35,7 @@ namespace Vision2020
         public void Read(ReaderMode readerMode, CancellationToken token)
         {
             _readerMode = readerMode;
-            Console.WriteLine("Packateer!");
-
+            
             int totalBytes = 0;
 
             if (ReaderMode != ReaderMode.rmRecord)
@@ -83,6 +82,7 @@ namespace Vision2020
                 }
             }
             callBack.LogLine("");
+            SpeachSynthesizer.QueueText("Done");
             if (ReaderMode == ReaderMode.rmRecord)
             {
                 SaveData();

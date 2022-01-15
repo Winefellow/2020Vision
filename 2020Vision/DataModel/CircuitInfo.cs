@@ -101,7 +101,7 @@ namespace Vision2020
                     progressRect.Width = progressRect.Width * pctCovered;
                     g.FillRectangle(br, progressRect);
                 }
-                String s = TimeSpan.FromMilliseconds(lapInfo.currentLapTimeInMS).ToString("mm.ss.fff");
+                String s = TimeSpan.FromMilliseconds(lapInfo.currentLapTimeInMS).ToString("mm\\:ss\\.fff");
                 var f = new Font("Courier New", 8);
                 br = new SolidBrush(Color.Blue);
                 g.DrawString(s, f, br, lapRect);

@@ -79,7 +79,7 @@ namespace Vision2020
 
         private String TS(UInt32 time)
         {
-            return TimeSpan.FromMilliseconds(time).ToString("mm.ss.fff");
+            return TimeSpan.FromMilliseconds(time).ToString("mm\\:ss\\.fff");
         }
 
         private void DriverListBox_Paint(object sender, PaintEventArgs e)
@@ -585,6 +585,7 @@ namespace Vision2020
 
             ActiveTask = new Task(() =>
             {
+                
                 pr.Read(ReaderMode.rmRecord, cancelSource.Token);
             }, cancelSource.Token);
             ActiveTask.ContinueWith((x) => { LogLaps(x); });
@@ -735,10 +736,7 @@ namespace Vision2020
                         //}
                         LogLine($"Loaded {lap.FileName}");
                     }
-                    lock (sessionInfo)
-                    {
-                        sessionInfo = new SessionInfo(selectedLaps);
-                    }
+                    sessionInfo = new SessionInfo(selectedLaps);
                     DrawTelemetryBitmap();
                     replayTimer.Enabled = true;
                 }
