@@ -95,7 +95,7 @@ namespace Vision2020
             playerInfo = PacketHelper.SafeRead<ParticipantData>(fIn, PacketSize.ParticipantDataSize);
             lap.complete = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.FirstTiming = PacketHelper.SafeRead<LapData>(fIn, PacketSize.LapDataSize);
-            lap.lapTime = PacketHelper.SafeRead<float>(fIn, PacketSize.FloatSize);
+            lap.lapTimeInMs = PacketHelper.SafeRead<UInt32>(fIn, PacketSize.FloatSize);
             lap.started = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.valid = PacketHelper.SafeRead<bool>(fIn, PacketSize.BoolSize);
             lap.Setup = PacketHelper.SafeRead<CarSetupData>(fIn, PacketSize.CarSetupDataSize);
@@ -132,7 +132,7 @@ namespace Vision2020
 
             PacketHelper.SafeWrite<bool>(fOut, lap.complete, PacketSize.BoolSize);
             PacketHelper.SafeWrite<LapData>(fOut, lap.FirstTiming, PacketSize.LapDataSize);
-            PacketHelper.SafeWrite<float>(fOut, lap.lapTime, PacketSize.FloatSize);
+            PacketHelper.SafeWrite<float>(fOut, lap.lapTime, PacketSize.IntSize);
             PacketHelper.SafeWrite<bool>(fOut, lap.started, PacketSize.BoolSize);
             PacketHelper.SafeWrite<bool>(fOut, lap.valid, PacketSize.BoolSize);
             PacketHelper.SafeWrite<CarSetupData>(fOut, lap.Setup, PacketSize.CarSetupDataSize);
@@ -280,7 +280,7 @@ namespace Vision2020
                             });
                     }
                 }
-                catch(Exception e)
+                catch // (Exception e)
                 {
                     //lama
                     // MessageDialog.Show(e);
@@ -300,7 +300,12 @@ namespace Vision2020
 
         public static void LoadDictionary(AsyncUI mainWindow)
         {
-            String json = File.ReadAllText(BS(baseDir) + dictFileName);
+            String json = "[]";
+            if (File.Exists(BS(baseDir) + dictFileName))
+            {
+                json = File.ReadAllText(BS(baseDir) + dictFileName);
+
+            }
             Laps = JsonSerializer.Deserialize<List<LapInfo>>(json);
 
             int i = Laps.Count;

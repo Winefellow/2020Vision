@@ -57,7 +57,7 @@ namespace Vision2020
                 using (var socket = new UDPSocket())
                 {
                     socket.Client(20777);
-                    callBack.LogLine("Waiting...");
+                    callBack.LogLine("Waiting for packets (port 20777)...");
 
                     while (!token.IsCancellationRequested)
                     {
@@ -154,9 +154,10 @@ namespace Vision2020
                 packet.header = PacketHelper.SafeRead<PacketHeader>(fIn, PacketSize.PacketHeaderSize);
             }
 
-            if (packet.header.packetFormat != 2020)
+            if (packet.header.packetFormat != 2020 && packet.header.packetFormat != 2021)
             {
-                throw new Exception($"Invalid packet format: last Packet {lastPacket.header.packetId}");
+                callBack.LogLine($"FATAL: Invalid packet format: last Packet {packet.header.packetFormat}");
+                throw new Exception($"Invalid packet format: last Packet {packet.header.packetFormat}");
             }
 
             if (ReaderMode == ReaderMode.rmReplay)
@@ -185,7 +186,7 @@ namespace Vision2020
 
             switch (packet.header.packetId)
             {
-                case 0:
+                case 0: // Motion
                     {
                         if (logPackets) callBack.Log(".");                 // Motion info
                         packet.details = PacketHelper.SafeRead<PacketMotionData>(fIn, PacketSize.PacketMotionDataSize);
@@ -312,6 +313,18 @@ namespace Vision2020
                     {
                         if (logPackets) callBack.Log("9L");
                         packet.details = PacketHelper.SafeRead<PacketLobbyInfoData>(fIn, PacketSize.PacketLobbyInfoDataSize);
+                        break;
+                    }
+                case 10: // Car Damage
+                    {
+                        if (logPackets) callBack.Log("10L");
+                        packet.details = PacketHelper.SafeRead<PacketCarDamageData>(fIn, PacketSize.PacketCarDamageDataSize);
+                        break;
+                    }
+                case 11: // Session history
+                    {
+                        if (logPackets) callBack.Log("11L");
+                        packet.details = PacketHelper.SafeRead<PacketSessionHistoryData>(fIn, PacketSize.PacketSessionHistoryDataSize);
                         break;
                     }
                 default:
