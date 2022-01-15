@@ -148,6 +148,7 @@ namespace Vision2020
                     else
                         currentLapNum[i] = data.lapData[i].currentLapNum;
                 }
+                SpeachSynthesizer.AddLapInfo(context.frameIdentifier, data.lapData[context.playerCarIndex]);
             }
             else
             {
@@ -161,6 +162,7 @@ namespace Vision2020
             {
                 sessionDetailsPresent = true;
                 circuit = new CircuitInfo(data);
+                SpeachSynthesizer.SetTrack(data);
             }
         }
 
@@ -181,6 +183,7 @@ namespace Vision2020
                         }
                     }
                 }
+                SpeachSynthesizer.AddMotionInfo(context.frameIdentifier, data.carMotionData[context.playerCarIndex]);
             }
         }
 
@@ -200,6 +203,7 @@ namespace Vision2020
                         }
                     }
                 }
+                SpeachSynthesizer.AddTelemetry(context.frameIdentifier, data.carTelemetryData[context.playerCarIndex]);
             }
         }
 

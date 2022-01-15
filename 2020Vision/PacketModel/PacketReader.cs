@@ -17,7 +17,7 @@ namespace Vision2020
         
         protected bool logPackets = false;
         protected int packetCount = 0;
-        protected TimeSpan diff = TimeSpan.MinValue;
+        protected DateTime Starttijd = DateTime.MinValue;
         protected PacketInfo lastPacket = null;
 
         private Stream dataStream;
@@ -164,23 +164,23 @@ namespace Vision2020
             if (ReaderMode == ReaderMode.rmReplay)
             {
                 // Simulate time
-                if (diff == TimeSpan.MinValue)
+                if (Starttijd == DateTime.MinValue)
                 {
-                    diff = (DateTime.Now - PacketHelper.UnixTimeStampToDateTime(packet.header.sessionTime));
+                    Starttijd = DateTime.Now.Add(TimeSpan.FromSeconds(-packet.header.sessionTime));
                 }
                 else
                 {
                     bool inPause = callBack.IsPausing();
                     DateTime startPause = DateTime.Now;
                     while (!token.IsCancellationRequested && 
-                                (callBack.IsPausing() || 
-                                (PacketHelper.UnixTimeStampToDateTime(packet.header.sessionTime) + diff) > DateTime.Now))
+                                (callBack.IsPausing() ||
+                                (Starttijd.Add(TimeSpan.FromSeconds(packet.header.sessionTime)) > DateTime.Now)))
                     {
                         Thread.Sleep(1);
                     }
                     if (inPause)
                     {
-                        diff = diff + (DateTime.Now - startPause);
+                        Starttijd = Starttijd.Add(DateTime.Now - startPause);
                     }
                 }
             }
@@ -192,6 +192,7 @@ namespace Vision2020
                         if (logPackets) callBack.Log(".");                 // Motion info
                         packet.details = PacketHelper.SafeRead<PacketMotionData>(fIn, PacketSize.PacketMotionDataSize);
                         callBack.UpdateMotion(packet.header, (PacketMotionData)packet.details);
+
                         break;
                     }
                 case 1: // Session

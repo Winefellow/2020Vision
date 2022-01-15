@@ -581,6 +581,11 @@ namespace Vision2020
             }
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Zie MouseClick
+        }
+
         private void ReplayButton_MouseClick(object sender, MouseEventArgs e)
         {
             if (!Reset())
@@ -633,11 +638,6 @@ namespace Vision2020
         private void RecordButton_Click(object sender, EventArgs e)
         {
             StartOrStopRecording();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            // Zie MouseClick
         }
 
         public void UpdateMotion(PacketHeader context, PacketMotionData data)

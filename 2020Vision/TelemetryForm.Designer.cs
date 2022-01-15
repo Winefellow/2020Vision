@@ -58,9 +58,10 @@ namespace Vision2020
             // driverListBox
             // 
             this.driverListBox.Dock = System.Windows.Forms.DockStyle.Right;
-            this.driverListBox.Location = new System.Drawing.Point(933, 0);
+            this.driverListBox.Location = new System.Drawing.Point(1244, 0);
+            this.driverListBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.driverListBox.Name = "driverListBox";
-            this.driverListBox.Size = new System.Drawing.Size(330, 609);
+            this.driverListBox.Size = new System.Drawing.Size(440, 750);
             this.driverListBox.TabIndex = 8;
             this.driverListBox.TabStop = false;
             this.driverListBox.Click += new System.EventHandler(this.DriverListBox_Click);
@@ -70,21 +71,23 @@ namespace Vision2020
             // tbLog
             // 
             this.tbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tbLog.Location = new System.Drawing.Point(0, 534);
+            this.tbLog.Location = new System.Drawing.Point(0, 659);
+            this.tbLog.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.tbLog.Multiline = true;
             this.tbLog.Name = "tbLog";
             this.tbLog.ReadOnly = true;
             this.tbLog.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tbLog.Size = new System.Drawing.Size(933, 75);
+            this.tbLog.Size = new System.Drawing.Size(1244, 91);
             this.tbLog.TabIndex = 9;
             // 
             // splitter2
             // 
             this.splitter2.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.splitter2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.splitter2.Location = new System.Drawing.Point(0, 531);
+            this.splitter2.Location = new System.Drawing.Point(0, 655);
+            this.splitter2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitter2.Name = "splitter2";
-            this.splitter2.Size = new System.Drawing.Size(933, 3);
+            this.splitter2.Size = new System.Drawing.Size(1244, 4);
             this.splitter2.TabIndex = 10;
             this.splitter2.TabStop = false;
             // 
@@ -92,9 +95,10 @@ namespace Vision2020
             // 
             this.splitter3.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.splitter3.Dock = System.Windows.Forms.DockStyle.Right;
-            this.splitter3.Location = new System.Drawing.Point(930, 0);
+            this.splitter3.Location = new System.Drawing.Point(1240, 0);
+            this.splitter3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitter3.Name = "splitter3";
-            this.splitter3.Size = new System.Drawing.Size(3, 531);
+            this.splitter3.Size = new System.Drawing.Size(4, 655);
             this.splitter3.TabIndex = 11;
             this.splitter3.TabStop = false;
             // 
@@ -102,9 +106,10 @@ namespace Vision2020
             // 
             this.splitter4.BackColor = System.Drawing.SystemColors.ActiveCaption;
             this.splitter4.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.splitter4.Location = new System.Drawing.Point(0, 395);
+            this.splitter4.Location = new System.Drawing.Point(0, 487);
+            this.splitter4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitter4.Name = "splitter4";
-            this.splitter4.Size = new System.Drawing.Size(930, 3);
+            this.splitter4.Size = new System.Drawing.Size(1240, 4);
             this.splitter4.TabIndex = 10;
             this.splitter4.TabStop = false;
             // 
@@ -112,8 +117,9 @@ namespace Vision2020
             // 
             this.circuitBoxBG.Dock = System.Windows.Forms.DockStyle.Fill;
             this.circuitBoxBG.Location = new System.Drawing.Point(0, 0);
+            this.circuitBoxBG.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.circuitBoxBG.Name = "circuitBoxBG";
-            this.circuitBoxBG.Size = new System.Drawing.Size(930, 531);
+            this.circuitBoxBG.Size = new System.Drawing.Size(1240, 655);
             this.circuitBoxBG.TabIndex = 13;
             this.circuitBoxBG.TabStop = false;
             // 
@@ -136,9 +142,10 @@ namespace Vision2020
             // 
             this.lapLineBox.BackColor = System.Drawing.Color.Black;
             this.lapLineBox.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.lapLineBox.Location = new System.Drawing.Point(0, 398);
+            this.lapLineBox.Location = new System.Drawing.Point(0, 491);
+            this.lapLineBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.lapLineBox.Name = "lapLineBox";
-            this.lapLineBox.Size = new System.Drawing.Size(930, 133);
+            this.lapLineBox.Size = new System.Drawing.Size(1240, 164);
             this.lapLineBox.TabIndex = 18;
             this.lapLineBox.TabStop = false;
             this.lapLineBox.Visible = false;
@@ -153,8 +160,9 @@ namespace Vision2020
             this.circuitBox.Controls.Add(this.replayButton);
             this.circuitBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.circuitBox.Location = new System.Drawing.Point(0, 0);
+            this.circuitBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.circuitBox.Name = "circuitBox";
-            this.circuitBox.Size = new System.Drawing.Size(930, 395);
+            this.circuitBox.Size = new System.Drawing.Size(1240, 487);
             this.circuitBox.TabIndex = 19;
             this.circuitBox.TabStop = false;
             this.circuitBox.Click += new System.EventHandler(this.circuitBox_Click);
@@ -165,9 +173,10 @@ namespace Vision2020
             // 
             // btnAddCompareLap
             // 
-            this.btnAddCompareLap.Location = new System.Drawing.Point(3, 90);
+            this.btnAddCompareLap.Location = new System.Drawing.Point(4, 111);
+            this.btnAddCompareLap.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.btnAddCompareLap.Name = "btnAddCompareLap";
-            this.btnAddCompareLap.Size = new System.Drawing.Size(75, 23);
+            this.btnAddCompareLap.Size = new System.Drawing.Size(100, 28);
             this.btnAddCompareLap.TabIndex = 21;
             this.btnAddCompareLap.Text = "Lap Compare";
             this.btnAddCompareLap.UseVisualStyleBackColor = true;
@@ -175,9 +184,10 @@ namespace Vision2020
             // 
             // Analyze
             // 
-            this.Analyze.Location = new System.Drawing.Point(3, 32);
+            this.Analyze.Location = new System.Drawing.Point(4, 39);
+            this.Analyze.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Analyze.Name = "Analyze";
-            this.Analyze.Size = new System.Drawing.Size(75, 23);
+            this.Analyze.Size = new System.Drawing.Size(100, 28);
             this.Analyze.TabIndex = 20;
             this.Analyze.Text = "Analyze";
             this.Analyze.UseVisualStyleBackColor = true;
@@ -185,9 +195,10 @@ namespace Vision2020
             // 
             // RecordButton
             // 
-            this.RecordButton.Location = new System.Drawing.Point(3, 61);
+            this.RecordButton.Location = new System.Drawing.Point(4, 75);
+            this.RecordButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.RecordButton.Name = "RecordButton";
-            this.RecordButton.Size = new System.Drawing.Size(75, 23);
+            this.RecordButton.Size = new System.Drawing.Size(100, 28);
             this.RecordButton.TabIndex = 19;
             this.RecordButton.Text = "Record";
             this.RecordButton.UseVisualStyleBackColor = true;
@@ -195,13 +206,15 @@ namespace Vision2020
             // 
             // replayButton
             // 
-            this.replayButton.Location = new System.Drawing.Point(3, 3);
+            this.replayButton.Location = new System.Drawing.Point(4, 4);
+            this.replayButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.replayButton.Name = "replayButton";
-            this.replayButton.Size = new System.Drawing.Size(75, 23);
+            this.replayButton.Size = new System.Drawing.Size(100, 28);
             this.replayButton.TabIndex = 18;
             this.replayButton.Text = "Replay";
             this.replayButton.UseVisualStyleBackColor = true;
             this.replayButton.Click += new System.EventHandler(this.button1_Click);
+            this.replayButton.MouseClick += new System.Windows.Forms.MouseEventHandler(this.ReplayButton_MouseClick);
             // 
             // playerInfoBindingSource
             // 
@@ -214,9 +227,9 @@ namespace Vision2020
             // 
             // TelemetryForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1263, 609);
+            this.ClientSize = new System.Drawing.Size(1684, 750);
             this.Controls.Add(this.circuitBox);
             this.Controls.Add(this.splitter4);
             this.Controls.Add(this.lapLineBox);
@@ -227,6 +240,7 @@ namespace Vision2020
             this.Controls.Add(this.driverListBox);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "TelemetryForm";

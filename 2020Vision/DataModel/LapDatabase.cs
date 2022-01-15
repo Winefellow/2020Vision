@@ -379,6 +379,11 @@ namespace Vision2020
             fileop.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
             SHFileOperation(ref fileop);
         }
+
+        internal static string GetApexFileName(int lastTrack)
+        {
+           return BS(baseDir)+BS(Constants.TrackList.First(t => t.id == lastTrack)?.name ?? "Unknown")+"apex.json";
+        }
     }
 
 
