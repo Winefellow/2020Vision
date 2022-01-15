@@ -91,6 +91,10 @@ namespace Vision2020
                                     throw new Exception($"Car switch detected {player.Name},{player.CarNumber} => {participant.name},{participant.raceNumber} ");
                                 }
                             }
+                            else
+                            {
+                                playerInfo[participantIndex]?.Update(participant);
+                            }
                         }
                     }
                 }
@@ -128,7 +132,7 @@ namespace Vision2020
                                 var lapInfo = playerData.AddLapData(context, data.lapData[i]);
                                 if (lapInfo != null)
                                 {
-                                    callback.LogLine($"{playerData.CarNumber}:{playerData.Name} : {lapInfo.lapTime.ToString()}");
+                                    callback.LogLine($"{playerData.CarNumber}:{playerData.Name} - lap {data.lapData[i].currentLapNum} : {lapInfo.lapTime.ToString()}");
                                     LapDatabase.Add(
                                         new CompletedLap()
                                         { 
@@ -197,6 +201,26 @@ namespace Vision2020
                 }
             }
         }
+
+        public void Update(PacketHeader context, PacketCarSetupData data)
+        {
+            if (circuit != null)
+            {
+                for (int i = 0; i < participantsData.numActiveCars; i++)
+                {
+                    lock (playerInfo)
+                    {
+                        var playerData = GetPlayerByIndex(i);
+
+                        if (currentLapNum[i] >= 0 && playerData != null)
+                        {
+                            playerData.AddSetupData(currentLapNum[i], context, data.m_carSetups[i]);
+                        }
+                    }
+                }
+            }
+        }
+        
 
     }
 }

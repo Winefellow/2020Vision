@@ -89,6 +89,7 @@
     <Compile Include="LapSelect.Designer.cs">
       <DependentUpon>LapSelect.cs</DependentUpon>
     </Compile>
+    <Compile Include="ListViewColumnSorter.cs" />
     <Compile Include="PacketModel\PacketConstants.cs" />
     <Compile Include="PacketModel\AsyncUdP.cs" />
     <Compile Include="TelemetryForm.cs">

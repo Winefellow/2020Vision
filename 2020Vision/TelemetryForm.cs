@@ -29,14 +29,22 @@ namespace Vision2020
         public Rectangle closeButton;
         public Rectangle settingsButton;
         public Rectangle pauseButton;
+        public Rectangle[] cameraSettings = new Rectangle[8];
 
         float xFactor = (float)Math.Sin((2f * Math.PI) * 30 / 360f);
         float yFactor = (float)Math.Cos((2f * Math.PI) * 30 / 360f);
+        float xFactorOrig = (float)Math.Sin((2f * Math.PI) * 30 / 360f);
+        float yFactorOrig = (float)Math.Cos((2f * Math.PI) * 30 / 360f);
 
         private PacketReader pr = null;
         private Task ActiveTask = null;
         CancellationTokenSource cancelSource = null;
         private string selectedFileName = "";
+
+        float yZoom = 1;
+        float xZoom = 1;
+        float RotateAngle = 0;
+        float Tilt = 1;
 
         public TelemetryForm()
         {
@@ -82,17 +90,20 @@ namespace Vision2020
             return PacketHelper.UnixTimeStampToDateTime(time).ToString("mm.ss.fff");
         }
 
+        Bitmap DriverlistBitmap = null;
+
         private void DriverListBox_Paint(object sender, PaintEventArgs e)
         {
-            bool inSession = sessionInfo != null;
+            if (DriverlistBitmap == null) return;
+            bool inSession = sessionInfo != null && sessionInfo.circuit != null;
             DrawingPlayers = true;
 
             // Draw with double-buffering.
             UpdateCount[0]++;
             DateTime start = DateTime.Now;
-            Bitmap bitmap = new Bitmap(driverListBox.Width, driverListBox.Height);
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(DriverlistBitmap))
             {
+                g.Clear(Color.LightGray);
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
                 int nameWidth = driverListBox.Width / 2;
@@ -276,7 +287,7 @@ namespace Vision2020
                         }
                     }
                 }
-                e.Graphics.DrawImage(bitmap, new Point(0, 0));
+                e.Graphics.DrawImage(DriverlistBitmap, new Point(0, 0));
             }
             UpdateTime[0] = UpdateTime[0] + (DateTime.Now - start);
             DrawingPlayers = false;
@@ -342,13 +353,19 @@ namespace Vision2020
             return 0;
         }
 
+        Bitmap CircuitBitmap = null;
+
         private void circuitBox_Paint(object sender, PaintEventArgs e)
         {
             int paints = 0;
-            if (DrawingCircuit || (sessionInfo == null))
+            if (CircuitBitmap == null || DrawingCircuit || (sessionInfo == null))
             {
                 // LogLine("Abort!");
                 return;
+            }
+            if (CircuitBitmap.Width != circuitBox.Width)
+            {
+                CircuitBitmap = new Bitmap(circuitBox.Width, circuitBox.Height);
             }
             DrawingCircuit = true;
             DateTime start = DateTime.Now;
@@ -369,13 +386,13 @@ namespace Vision2020
                 dat = sessionInfo.circuit.motionInfo;
             }
             UpdateCount[1]++;
-            Bitmap bitmap = new Bitmap(circuitBox.Width, circuitBox.Height);
 
             // Draw with double-buffering.
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(CircuitBitmap))
             {
                 var f = new Font("Arial", 10);
                 var br = new SolidBrush(Color.Black);
+                g.Clear(Color.LightCyan);
 
 #if EXTRA_DEBUG                
                 String sInfo = $"{UpdateCount[0]}:{(int)UpdateTime[0].Seconds}.{UpdateTime[0].Milliseconds:00} ";
@@ -407,8 +424,8 @@ namespace Vision2020
                     }
                 }
 
-                PointF bottomW = Translate(maxx, maxy, maxz);
-                PointF topW = Translate(minx, miny, minz);
+                PointF bottomW = Translate(maxx, maxy, maxz, true);
+                PointF topW = Translate(minx, miny, minz, true);
                 PointF sizeW = new PointF(bottomW.X - topW.X, bottomW.Y - topW.Y); //The Size of the world
 
                 float scalexS = (float)(circuitBox.Width - 30) / (sizeW.X);  // W.X * scaleX
@@ -465,12 +482,31 @@ namespace Vision2020
                         index++;
                     }
                 }
-
+                AddNavigation(g, circuitBox.Width, circuitBox.Height);
             }
-            e.Graphics.DrawImage(bitmap, new Point(0, 0));
+            e.Graphics.DrawImage(CircuitBitmap, new Point(0, 0));
             // bitmap.Save("images\\"+UpdateCount[1].ToString()+".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
             UpdateTime[1] = UpdateTime[1] + (DateTime.Now - start);
             DrawingCircuit = false;
+        }
+
+        public void AddNavigation(Graphics g, int X, int Y)
+        {   //      +⤵ ⬆   
+            //     - +  
+            //      -⤴ ⬇ 
+            //  987654321 
+            int nPixelX = 20;
+            int nPixelY = 20;
+            int[] offsetX = new int[8] { 5, 4, 2, 6, 4, 5, 4, 2 };
+            int[] offsetY = new int[8] { 3, 3, 3, 2, 2, 1, 1, 1 };
+            char[] controlChar = new char[8] { '+', '⤵', '⬆', '-', '+', '-', '⤴', '⬇' };
+            Font f = new Font("Arial", 16);
+            Brush br = new SolidBrush(Color.DarkGray);
+            for (int i = 0; i < 8; i++)
+            {
+                cameraSettings[i] = new Rectangle(X - offsetX[i] * nPixelX, Y - offsetY[i] * nPixelY, nPixelX, nPixelY);
+                g.DrawString(controlChar[i].ToString(), f, br, cameraSettings[i]);
+            }
         }
 
         public void EndSession(PacketHeader data)
@@ -677,6 +713,19 @@ namespace Vision2020
             }
         }
 
+        public void UpdateSetup(PacketHeader context, PacketCarSetupData setupData)
+        {
+            if (sessionInfo == null)
+            {
+                return;
+            }
+            lock (sessionInfo)
+            {
+                sessionInfo.Update(context, setupData);
+            }
+        }
+
+
 
         private void TelemetryForm_Shown(object sender, EventArgs e)
         {
@@ -711,29 +760,46 @@ namespace Vision2020
                     lapLineBox.Visible = true;
                     foreach (var lap in ls.GetSelectedLaps())
                     {
-                        lap.LoadDetails();
-                        selectedLaps.Add(new LapAnalyzer()
+                        try
                         {
-                            lapInfo = lap,
-                            motionIndex = 0,
-                            offset = DateTime.Now - PacketHelper.UnixTimeStampToDateTime(lap.Details.lap.lapMotion.First().context.sessionTime),
-                            telemetryIndex = 0
-                        }) ;
-                        var lapInfo = lap.Details.lap.lapData[0].lapData;
-                        // LogLine($"0 Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
-                        //foreach (var lapTimings in lap.Details.lap.lapData)
-                        //{
-                        //    if ((lapTimings.lapData.driverStatus != lapInfo.driverStatus) ||
-                        //       (lapTimings.lapData.resultStatus != lapInfo.resultStatus) ||
-                        //       (lapTimings.lapData.sector != lapInfo.sector) ||
-                        //       (lapTimings.lapData.currentLapNum != lapInfo.currentLapNum) ||
-                        //       (lapTimings.lapData.currentLapInvalid != lapInfo.currentLapInvalid))
-                        //    {
-                        //        lapInfo = lapTimings.lapData;
-                        //        LogLine($"{lapTimings.context.frameIdentifier} Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
-                        //    }
-                        //}
-                        LogLine($"Loaded {lap.FileName}");
+                            lap.LoadDetails();
+                            selectedLaps.Add(new LapAnalyzer()
+                            {
+                                lapInfo = lap,
+                                motionIndex = 0,
+                                offset = DateTime.Now - PacketHelper.UnixTimeStampToDateTime(lap.Details.lap.lapMotion.First().context.sessionTime),
+                                telemetryIndex = 0
+                            });
+                            var lapInfo = lap.Details.lap.lapData[0].lapData;
+                            // LogLine($"0 Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
+                            //foreach (var lapTimings in lap.Details.lap.lapData)
+                            //{
+                            //    if ((lapTimings.lapData.driverStatus != lapInfo.driverStatus) ||
+                            //       (lapTimings.lapData.resultStatus != lapInfo.resultStatus) ||
+                            //       (lapTimings.lapData.sector != lapInfo.sector) ||
+                            //       (lapTimings.lapData.currentLapNum != lapInfo.currentLapNum) ||
+                            //       (lapTimings.lapData.currentLapInvalid != lapInfo.currentLapInvalid))
+                            //    {
+                            //        lapInfo = lapTimings.lapData;
+                            //        LogLine($"{lapTimings.context.frameIdentifier} Status={lapInfo.driverStatus} Result={lapInfo.resultStatus} Sector={lapInfo.sector} inv={lapInfo.currentLapInvalid} lap={lapInfo.currentLapNum}");
+                            //    }
+                            //}
+                            LogLine($"Loaded {lap.FileName}");
+                            CarSetupData su = lap.Details.lap.Setup;
+                            String setupData = $"Bal:{su.byteballast} Brake{su.bytebrakeBias}%{su.bytebrakePressure}";
+                            setupData = setupData + $" susp:{su.bytefrontSuspension}+{su.bytefrontSuspensionHeight}|{su.bytefrontAntiRollBar}/{su.byterearAntiRollBar}|{su.byterearSuspension}+{su.byterearSuspensionHeight}";
+                            setupData = setupData + $" Thr:On{su.byteoffThrottle}/Off{su.byteoffThrottle}";
+                            setupData = setupData + $" CamToe:F{su.m_frontCamber}/{su.m_frontToe} R{su.m_rearCamber}/{su.m_rearToe}";
+                            setupData = setupData + $" TP:F{su.m_frontLeftTyrePressure}/{su.m_frontRightTyrePressure} R{su.m_rearLeftTyrePressure}/{su.m_rearRightTyrePressure}";
+                            setupData = setupData + $" W:F{su.m_frontWing}R{su.m_rearWing}";
+                            setupData = setupData + $" F:{su.m_fuelLoad}L";
+
+                            LogLine($"  Setup " + setupData);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogLine("Error loading: " + ex.Message);
+                        }
                     }
                     lock(sessionInfo = new SessionInfo(selectedLaps));
                     DrawTelemetryBitmap();
@@ -831,6 +897,12 @@ namespace Vision2020
         }
 
         Bitmap telemetryBitmap = null;
+
+        public struct SectorInfo
+        {
+
+        }
+        
         private void DrawTelemetryBitmap()
         {
             telemetryBitmap = new Bitmap(lapLineBox.Width, lapLineBox.Height);
@@ -915,6 +987,94 @@ namespace Vision2020
             if (lapLineBox.Visible && replayTimer.Enabled)
             {
                 DrawTelemetryBitmap();
+            }
+        }
+
+        private void circuitBox_Click(object sender, EventArgs e)
+        {
+            Point x = MousePosition;  // Mouseposition is dynamic, also during debugging :-((
+                                      // Stored mouse position just for useful debugging
+            Point c = circuitBox.PointToClient(x);
+//            clickTimer.Start
+            for (int i = 0; i < 8; i ++)
+            {
+                if (cameraSettings[i].Contains(c))
+                {
+                    //    + ⤵  ⬆   
+                    //  -   +   
+                    //    - ⤴  ⬇ 
+                    switch (i)
+                    {
+                        case 0:
+                            // Zoom in 
+                            yZoom = yZoom * 1.01f;
+                            break;
+                        case 1:
+                            // Rotate right 
+                            RotateAngle = RotateAngle + 5;
+                            break;
+                        case 2:
+                            // Tilt backside down 
+                            Tilt = Tilt * 1.01f;
+                            break;
+                        case 3:
+                            // Zoom in 
+                            xZoom = xZoom / 1.01f;
+                            break;
+                        case 4:
+                            // Zoom in 
+                            xZoom = xZoom * 1.01f;
+                            break;
+                        case 5:
+                            // Zoom in 
+                            yZoom = yZoom / 1.01f;
+                            break;
+                        case 6:
+                            // Rotate right 
+                            RotateAngle = RotateAngle - 5;
+                            break;
+                        case 7:
+                            // Tilt backside down 
+                            Tilt = Tilt / 1.01f;
+                            break;
+                        default:
+                            break;
+                    }
+                    circuitBox.Invalidate();
+                }
+            }
+        }
+
+        private void circuitBox_MouseDown(object sender, MouseEventArgs e)
+        {
+            //clickTimer.;
+
+        }
+
+        private void circuitBox_MouseUp_1(object sender, MouseEventArgs e)
+        {
+            //clickTimer.
+        }
+
+        private void clickTimer_Tick(object sender, EventArgs e)
+        {
+            // test
+
+        }
+
+        private void circuitBox_Resize(object sender, EventArgs e)
+        {
+            if (circuitBox.Height > 0 && circuitBox.Width > 0)
+            {
+                CircuitBitmap = new Bitmap(circuitBox.Width, circuitBox.Height);
+            }
+        }
+
+        private void driverListBox_Resize(object sender, EventArgs e)
+        {
+            if (driverListBox.Height > 0 && driverListBox.Width > 0)
+            {
+                DriverlistBitmap = new Bitmap(driverListBox.Width, driverListBox.Height);
             }
         }
 
@@ -1034,9 +1194,17 @@ namespace Vision2020
             }
         }
 
-        public PointF Translate(float X, float Y, float Z)
+        public PointF Translate(float X, float Y, float Z, bool unscaled = false)
         {
-            return (new PointF(X + xFactor * Y, Z + yFactor * Y));
+            // xZoom, yZoom, rotate, Tilt
+            if (unscaled)
+            {
+                return (new PointF(X + xFactorOrig * Y, Z + yFactorOrig * Y));
+            }
+            else
+            {
+                return (new PointF((X + xFactor * Y) * xZoom, (Z + yFactor * Y) * yZoom));
+            }
         }
     }
 }

@@ -285,6 +285,7 @@ namespace Vision2020
                         if (logPackets) callBack.Log("5C");
                         packet.details = PacketHelper.SafeRead<PacketCarSetupData>(fIn, PacketSize.PacketCarSetupDataSize);
                         Console.Write("Setup "); /// Packet detailing car setups for cars in the race
+                        callBack.UpdateSetup(packet.header, (PacketCarSetupData)packet.details);
                         break;
                     }
                 case 6: // Car telemetry

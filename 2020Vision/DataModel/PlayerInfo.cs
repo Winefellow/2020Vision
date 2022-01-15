@@ -51,6 +51,7 @@ namespace Vision2020
         public List<TelemetryInContext> lapTelemetry { get; set; }
         public List<MotionInContext> lapMotion { get; set; }
         public List<LapDataInContext> lapData { get; set; }
+        public CarSetupData Setup { get; set; }  // Might change during session, but only the last setup is recorded
         public bool complete { get; set; }
         public bool valid { get; set; }
         public bool started { get; set; }
@@ -96,6 +97,12 @@ namespace Vision2020
             }
         }
 
+        public void Update(ParticipantData p)
+        {
+            participantInfo = p;
+            Name = PacketHelper.GetString(participantInfo.name, 48) + " (" + PacketHelper.CountryShort(participantInfo.nationality) + ")";
+        }
+
         public void SetBox(RectangleF r)
         {
             selectBox = new Rectangle( (int)r.X, (int)r.Y, (int)r.Width, (int) r.Height);
@@ -128,10 +135,14 @@ namespace Vision2020
 
             if (lapData.resultStatus == 3)
             {
-                // Never reached!
-                activeLap.valid = true;
-                activeLap.complete = true;
-                completedLap = activeLap;
+                if (activeLap.lapTime > 0 && activeLap.lapMotion.Count > 100)
+                {
+                    activeLap.valid = true;
+                    activeLap.complete = true;
+                    completedLap = activeLap;
+                }
+                else 
+                    return null;
             }
             if (currentLapIndex != lapData.currentLapNum)
             {
@@ -214,6 +225,17 @@ namespace Vision2020
                 lastTelemetry = carTelemetryData;
             }
         }
+
+        internal void AddSetupData(int lapNumber, PacketHeader context, CarSetupData carSetupData)
+        {
+            if (currentLapIndex == lapNumber)
+            {
+                LapRecording rec = GetLap(lapNumber);
+                if (carSetupData.m_fuelLoad>0)
+                    rec.Setup = carSetupData;
+            }
+        }
+
         public CarTelemetryData? GetActualTelemetry()
         {
             if (currentLapIndex != -1)

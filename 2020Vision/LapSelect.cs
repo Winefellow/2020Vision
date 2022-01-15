@@ -133,5 +133,94 @@ namespace Vision2020
                 ignoreClicks = false;
             }
         }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (ignoreClicks) return;
+            using (new HourGlass())
+            {
+                ignoreClicks = true;
+                lvSelected.BeginUpdate();
+                lapList.BeginUpdate();
+                try
+                {
+                    foreach (ListViewItem item in lapList.CheckedItems)
+                    {
+                        LapDatabase.RemoveLap(LapDatabase.Laps.FirstOrDefault(la =>
+                            la.CircuitName == item.SubItems[0].Text &&
+                            la.SessionType == item.SubItems[1].Text &&
+                            la.CarNumber == item.SubItems[2].Text &&
+                            la.PlayerName == item.SubItems[3].Text &&
+                            la.TeamName == item.SubItems[4].Text &&
+                            la.LapTime.ToString("0.000") == item.SubItems[5].Text));
+                        lapList.Items.Remove(item);
+                    }
+                    while (lvSelected.Items.Count > 0)
+                    {
+                        lvSelected.Items.RemoveAt(0);
+                    }
+                }
+                finally
+                {
+                    Application.UseWaitCursor = false;
+                    lvSelected.EndUpdate();
+                    lapList.EndUpdate();
+                    ignoreClicks = false;
+                }
+            }
+        }
+
+        private void lapList_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
+            ListViewItemComparer comparer = null;
+            if (lapList.ListViewItemSorter is ListViewItemComparer)
+            {
+                comparer = (ListViewItemComparer)lapList.ListViewItemSorter;
+            }
+
+            if (e.Column == comparer?.Col)
+            {
+                comparer.ReverseOrder();
+            }
+            else
+            {
+                ListViewItemComparer sorter = new ListViewItemComparer(e.Column, false);
+                lapList.ListViewItemSorter = sorter;
+            }
+            lapList.Sort();
+        }
+
+        private void lapList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
+
+   public class HourGlass : IDisposable
+    {
+        public HourGlass()
+        {
+            Enabled = true;
+        }
+        public void Dispose()
+        {
+            Enabled = false;
+        }
+        public static bool Enabled
+        {
+            get { return Application.UseWaitCursor; }
+            set
+            {
+                if (value == Application.UseWaitCursor) return;
+                Application.UseWaitCursor = value;
+                Form f = Form.ActiveForm;
+                if (f != null && f.Handle != null)   // Send WM_SETCURSOR
+                    SendMessage(f.Handle, 0x20, f.Handle, (IntPtr)1);
+            }
+        }
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, IntPtr lp);
+    }
+
+   
 }

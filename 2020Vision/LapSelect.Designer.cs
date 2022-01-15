@@ -45,11 +45,15 @@ namespace Vision2020
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.OKButton = new System.Windows.Forms.Button();
+            this.btnDelete = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lapList
             // 
             this.lapList.Activation = System.Windows.Forms.ItemActivation.OneClick;
+            this.lapList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.lapList.CheckBoxes = true;
             this.lapList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colCircuit,
@@ -60,15 +64,16 @@ namespace Vision2020
             this.colLapTime});
             this.lapList.FullRowSelect = true;
             this.lapList.HideSelection = false;
-            this.lapList.HotTracking = true;
-            this.lapList.HoverSelection = true;
             this.lapList.Location = new System.Drawing.Point(12, 37);
             this.lapList.Name = "lapList";
             this.lapList.Size = new System.Drawing.Size(574, 477);
+            this.lapList.Sorting = System.Windows.Forms.SortOrder.Descending;
             this.lapList.TabIndex = 0;
             this.lapList.UseCompatibleStateImageBehavior = false;
             this.lapList.View = System.Windows.Forms.View.Details;
+            this.lapList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.lapList_ColumnClick);
             this.lapList.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.lapList_ItemChecked);
+            this.lapList.SelectedIndexChanged += new System.EventHandler(this.lapList_SelectedIndexChanged);
             // 
             // colCircuit
             // 
@@ -100,6 +105,8 @@ namespace Vision2020
             // 
             // tbFilter
             // 
+            this.tbFilter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.tbFilter.Location = new System.Drawing.Point(12, 11);
             this.tbFilter.Name = "tbFilter";
             this.tbFilter.Size = new System.Drawing.Size(574, 20);
@@ -108,6 +115,8 @@ namespace Vision2020
             // lvSelected
             // 
             this.lvSelected.Activation = System.Windows.Forms.ItemActivation.OneClick;
+            this.lvSelected.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.lvSelected.CheckBoxes = true;
             this.lvSelected.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
@@ -158,6 +167,7 @@ namespace Vision2020
             // 
             // OKButton
             // 
+            this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.OKButton.Location = new System.Drawing.Point(1093, 520);
             this.OKButton.Name = "OKButton";
@@ -166,11 +176,23 @@ namespace Vision2020
             this.OKButton.Text = "&OK";
             this.OKButton.UseVisualStyleBackColor = true;
             // 
+            // btnDelete
+            // 
+            this.btnDelete.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnDelete.Location = new System.Drawing.Point(12, 520);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(141, 23);
+            this.btnDelete.TabIndex = 5;
+            this.btnDelete.Text = "&Delete checked items";
+            this.btnDelete.UseVisualStyleBackColor = true;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
             // LapSelect
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1181, 552);
+            this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.OKButton);
             this.Controls.Add(this.lvSelected);
             this.Controls.Add(this.tbFilter);
@@ -200,5 +222,6 @@ namespace Vision2020
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private System.Windows.Forms.Button OKButton;
+        private System.Windows.Forms.Button btnDelete;
     }
 }
