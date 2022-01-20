@@ -11,6 +11,7 @@ namespace Vision2020
         public CircuitInfo circuit = null;
         public string SessionID;
         public int playerCarIndex;
+        
         public PlayerInfo[] playerInfo = new PlayerInfo[22];
 
         public bool sessionDetailsPresent { get; private set; }
@@ -31,7 +32,7 @@ namespace Vision2020
                 participants = new ParticipantData[22]
             };
             Update(lapData[0].lapInfo.Details.circuitInfo);
-            circuit.motionInfo = new PacketMotionData()
+            circuit.MotionInfo = new PacketMotionData()
             {
                 carMotionData = new CarMotionData[22]
             };
@@ -39,7 +40,7 @@ namespace Vision2020
             foreach(var lap in lapData)
             {
                 participantsData.participants[i] = lap.lapInfo.Details.playerInfo;
-                circuit.motionLog.AddRange(lap.lapInfo.Details.lap.lapMotion);
+                //circuit.motionInContextLog.AddRange(lap.lapInfo.Details.lap.lapMotion);
                 i++;
             }
             participantsData.numActiveCars = (byte) i;
@@ -133,11 +134,12 @@ namespace Vision2020
                                 var lapInfo = playerData.AddLapData(context, data.lapData[i]);
                                 if (lapInfo != null)
                                 {
+                                    circuit.AddLapInfo(lapInfo);
                                     callback.LogLine($"{playerData.CarNumber}:{playerData.Name} - lap {data.lapData[i].currentLapNum} : {lapInfo.lapTime.ToString()}");
                                     LapDatabase.Add(
                                         new CompletedLap()
                                         { 
-                                            circuitInfo = this.circuit.circuitData,
+                                            circuitInfo = this.circuit.CircuitData,
                                             playerInfo = participantsData.participants[i],
                                             lap = lapInfo
                                         });
@@ -148,7 +150,7 @@ namespace Vision2020
                     else
                         currentLapNum[i] = data.lapData[i].currentLapNum;
                 }
-                SpeachSynthesizer.AddLapInfo(context.frameIdentifier, data.lapData[context.playerCarIndex]);
+                circuit.CheckMyApex(context.frameIdentifier, data.lapData[context.playerCarIndex]);
             }
             else
             {
@@ -162,7 +164,14 @@ namespace Vision2020
             {
                 sessionDetailsPresent = true;
                 circuit = new CircuitInfo(data);
-                SpeachSynthesizer.SetTrack(data);
+            }
+        }
+
+        public void EndSession()
+        {
+            if (circuit!= null)
+            {
+                circuit.Save();
             }
         }
 
@@ -170,7 +179,7 @@ namespace Vision2020
         {
             if (circuit != null)
             {
-                circuit.Update(context, data,playerCarIndex);
+                circuit.Update(data);
                 for (int i = 0; i < participantsData.numActiveCars; i++)
                 {
                     lock (playerInfo)
@@ -183,7 +192,7 @@ namespace Vision2020
                         }
                     }
                 }
-                SpeachSynthesizer.AddMotionInfo(context.frameIdentifier, data.carMotionData[context.playerCarIndex]);
+                circuit.CheckMyApex(context.frameIdentifier, data.carMotionData[context.playerCarIndex]);
             }
         }
 
@@ -203,7 +212,7 @@ namespace Vision2020
                         }
                     }
                 }
-                SpeachSynthesizer.AddTelemetry(context.frameIdentifier, data.carTelemetryData[context.playerCarIndex]);
+                circuit.CheckMyApex(context.frameIdentifier, data.carTelemetryData[context.playerCarIndex]);
             }
         }
 

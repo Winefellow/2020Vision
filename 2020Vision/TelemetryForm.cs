@@ -78,7 +78,7 @@ namespace Vision2020
                     {
                         sessionInfo.Update(participantsData);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         LogLine(e.Message);
                     }
@@ -133,11 +133,16 @@ namespace Vision2020
                 pauseButton = new Rectangle(settingsButton.Left - (int)size.Width - left, top, (int)size.Width + marginX, (int)size.Height + marginY);
                 g.DrawString("=", f, br, pauseButton);
 
-                if (inSession)
+                // Check Again. Might be changes in another thread
+                if (inSession && sessionInfo.circuit != null)
                 {
-                    // SessionInfo
-                    string s = sessionTime.ToString("mm.ss") + " " + Constants.SessionTypeList.First(t => t.id == sessionInfo.circuit.circuitData.sessionType)?.name +
-                         " " +Constants.TrackList.First(t => t.id == sessionInfo.circuit.circuitData.trackId)?.name;
+                    string s = "";
+                    lock (sessionInfo.circuit)
+                    {
+                        // SessionInfo
+                        s = sessionTime.ToString("mm.ss") + " " + Constants.SessionTypeList.First(t => t.id == sessionInfo.circuit.CircuitData.sessionType)?.name +
+                             " " + Constants.TrackList.First(t => t.id == sessionInfo.circuit.CircuitData.trackId)?.name;
+                    }
                     //foreach (var count in packetCount)
                     //{
                     //    if (s != "")
@@ -153,7 +158,7 @@ namespace Vision2020
                     top = top + (int)size.Height + 2 * marginY;
 
                     f = new Font("Courier New", 9);
-                    
+
                     if (sessionInfo.playerInfo == null || (sessionInfo.playerInfo.Count() == 0))
                     {
                         //Center text
@@ -191,7 +196,11 @@ namespace Vision2020
 
                                 if (sessionInfo.circuit != null)
                                 {
-                                    sessionInfo.circuit.UpdateLapInfo(g, playerIndex, lapRect);
+                                    lock (sessionInfo.circuit)
+                                    {
+                                        // Show progress on current lap
+                                        sessionInfo.circuit.UpdateLapInfo(g, playerIndex, lapRect);
+                                    }
                                 }
                                 // Scheidings lijn
                                 top = top + (int)nameRect.Height + 2 * marginY;
@@ -206,15 +215,16 @@ namespace Vision2020
                                                         driverListBox.Width - marginX, driverListBox.Height - top - marginY * 4);
                     if (selectedLaps != null)
                     {
+                        // Analyze mode.
                         funbox.Height = funbox.Height / selectedLaps.Count;
                         foreach (var lap in selectedLaps)
                         {
                             g.FillRectangle(new SolidBrush(Color.White), funbox);
-                            
+
                             Font largeFont = new Font("Comic Sans MS", 72);
                             var lapData = lap.lapInfo.Details.lap.lapData[lap.lapDataIndex].lapData;
                             var telemetry = lap.lapInfo.Details.lap.lapTelemetry[lap.telemetryIndex].carTelemetry;
-                            
+
                             string speed = telemetry.speed.ToString();
                             size = g.MeasureString(speed, largeFont);
                             RectangleF speedRect = new RectangleF(funbox.Left, funbox.Top, size.Width, size.Height);
@@ -258,14 +268,14 @@ namespace Vision2020
                             else if (cd.speed < 180)
                             {
                                 Rood = 255 - (cd.speed - 120) * 2;
-                                Groen = 255 - (cd.speed - 120)  * 2;
+                                Groen = 255 - (cd.speed - 120) * 2;
                             }
                             else
                             {
                                 Groen = 255 - (cd.speed - 120);
                                 Blauw = 255 - (cd.speed - 120);
                             }
-                            g.FillRectangle(new SolidBrush(Color.FromArgb(Rood,Groen,Blauw)), funbox);
+                            g.FillRectangle(new SolidBrush(Color.FromArgb(Rood, Groen, Blauw)), funbox);
                             //String gear = cd.gear;
                             //String rpm= cd.engineRPM;
                             //String rev = cd.revLightsPercent;
@@ -284,6 +294,7 @@ namespace Vision2020
                         }
                         else
                         {
+                            // Blauwe achtergrond
                             g.FillRectangle(new SolidBrush(Color.Blue), funbox);
                         }
                     }
@@ -303,15 +314,17 @@ namespace Vision2020
             if (closeButton.Contains(c))
             {
                 IAmClosing = true;
+                Reset();
                 Close();
             }
             else if (settingsButton.Contains(c))
             {
                 LogLine("Settings");
                 IAmPausing = true;
-                WindowState = FormWindowState.Minimized;
+                new SettingsForm().ShowDialog();
+                IAmPausing = false;
+                //WindowState = FormWindowState.Minimized;
             }
-
             else if (pauseButton.Contains(c))
             {
                 IAmPausing = !IAmPausing;
@@ -319,7 +332,7 @@ namespace Vision2020
 
             if (sessionInfo != null && sessionInfo.playerInfo != null)
             {
-                foreach(var player in sessionInfo.playerInfo)
+                foreach (var player in sessionInfo.playerInfo)
                 {
                     if (player != null && player.selectBox.Contains(c))
                     {
@@ -335,19 +348,17 @@ namespace Vision2020
             sessionTime = PacketHelper.UnixTimeStampToDateTime(packet.header.sessionTime);
         }
 
-        float minx = 0, miny = 0, minz = 0, maxx = 1, maxy = 1, maxz = 0;
-
         bool DrawingCircuit = false;
         bool DrawingPlayers = false;
         bool DrawingTelemetry = false;
 
         private float N(float X)
         {
-            if (X>0)
+            if (X > 0)
             {
                 return 4;
             }
-            if (X<0)
+            if (X < 0)
             {
                 return -4;
             }
@@ -369,14 +380,14 @@ namespace Vision2020
                 CircuitBitmap = new Bitmap(circuitBox.Width, circuitBox.Height);
             }
             DrawingCircuit = true;
+
             DateTime start = DateTime.Now;
             PacketMotionData dat;
             lock (sessionInfo)
             {
                 if (sessionInfo == null ||
                         sessionInfo.playerInfo == null ||
-                        sessionInfo.circuit == null ||
-                        sessionInfo.circuit.motionInfo.carMotionData == null)
+                        sessionInfo.circuit == null)
                 {
                     // LogLine($"Abort 2! { (sessionInfo == null ? "s" : "") } { (sessionInfo.playerInfo == null ? "p" : "") } { (sessionInfo?.circuit == null ? "c" : "") } { (sessionInfo?.circuit?.motionInfo.carMotionData == null ? "m" : "") }");
                     DrawingCircuit = false;
@@ -384,7 +395,13 @@ namespace Vision2020
                     return;
                 }
                 //clone
-                dat = sessionInfo.circuit.motionInfo;
+                dat = sessionInfo.circuit.MotionInfo;
+            }
+            var layout = sessionInfo.circuit.CircuitLayoutData;
+            if (layout == null || layout.minx == layout.maxx || layout.miny == layout.maxy || layout.minz == layout.maxz || dat.carMotionData == null)
+            {
+                DrawingCircuit = false;
+                return;
             }
             UpdateCount[1]++;
 
@@ -401,32 +418,8 @@ namespace Vision2020
                 var pf = new PointF(circuitBox.Width / 2 - size.Width / 2, circuitBox.Height / 2 - size.Height);
                 var size = g.DrawString(sInfo, f, br, pf);
 #endif
-
-                foreach (CarMotionData cmd in dat.carMotionData)
-                {
-                    // Validate if we are looking in the right window
-                    if (cmd.worldPositionX < minx) minx = cmd.worldPositionX;
-                    if (cmd.worldPositionX > maxx) maxx = cmd.worldPositionX;
-                    if (cmd.worldPositionY < miny) miny = cmd.worldPositionY;
-                    if (cmd.worldPositionY > maxy) maxy = cmd.worldPositionY;
-                    if (cmd.worldPositionZ < minz) minz = cmd.worldPositionZ;
-                    if (cmd.worldPositionZ > maxz) maxz = cmd.worldPositionZ;
-                }
-                if (maxz == 0 && minz == 0)
-                {
-                    foreach (MotionInContext cmd in sessionInfo.circuit.motionLog)
-                    {
-                        if (cmd.carMotion.worldPositionX < minx) minx = cmd.carMotion.worldPositionX;
-                        if (cmd.carMotion.worldPositionX > maxx) maxx = cmd.carMotion.worldPositionX;
-                        if (cmd.carMotion.worldPositionY < miny) miny = cmd.carMotion.worldPositionY;
-                        if (cmd.carMotion.worldPositionY > maxy) maxy = cmd.carMotion.worldPositionY;
-                        if (cmd.carMotion.worldPositionZ < minz) minz = cmd.carMotion.worldPositionZ;
-                        if (cmd.carMotion.worldPositionZ > maxz) maxz = cmd.carMotion.worldPositionZ;
-                    }
-                }
-
-                PointF bottomW = Translate(maxx, maxy, maxz, true);
-                PointF topW = Translate(minx, miny, minz, true);
+                PointF bottomW = Translate(layout.maxx, layout.maxy, layout.maxz, true);
+                PointF topW = Translate(layout.minx, layout.miny, layout.minz, true);
                 PointF sizeW = new PointF(bottomW.X - topW.X, bottomW.Y - topW.Y); //The Size of the world
 
                 float scalexS = (float)(circuitBox.Width - 30) / (sizeW.X);  // W.X * scaleX
@@ -434,25 +427,61 @@ namespace Vision2020
 
                 PointF offsetS = new PointF(topW.X * scalexS, topW.Y * scaleyS);
                 int index = 0;
-                lock (sessionInfo.circuit.motionLog)
+
+                lock (sessionInfo)
                 {
-                    foreach (MotionInContext cmd in sessionInfo.circuit.motionLog)
+                    if (layout.pointVectors.Any())
                     {
-                        // Calculate world coordinates
-                        var m = cmd.carMotion;
-                        PointF lineStartW = Translate(cmd.carMotion.worldPositionX, cmd.carMotion.worldPositionY, cmd.carMotion.worldPositionZ);
-                        PointF lineEndW = Translate(cmd.carMotion.worldPositionX - cmd.carMotion.worldVelocityX / 5, 
-                                                    cmd.carMotion.worldPositionY - cmd.carMotion.worldVelocityY / 5, 
-                                                    cmd.carMotion.worldPositionZ - cmd.carMotion.worldVelocityZ / 5);
-                        // PointF lineEndW = Translate(cmd.worldPositionX + N(cmd.worldVelocityX), cmd.worldPositionY + N(cmd.worldVelocityY), cmd.worldPositionZ + N(cmd.worldVelocityZ));
-                        // Convert to Screen coordinates
-                        PointF lineStartS = new PointF(lineStartW.X * scalexS - offsetS.X, lineStartW.Y * scaleyS - offsetS.Y);
-                        PointF lineEndS = new PointF(lineEndW.X * scalexS - offsetS.X, lineEndW.Y * scaleyS - offsetS.Y);
-                        g.DrawLine(new Pen(new SolidBrush(Color.GreenYellow), 2), lineStartS, lineEndS);
+                        PointF? firstStart = null;
+                        PointF? lastStart = null;
+                        foreach (var vector in layout.pointVectors.Where(b=>b.InPit == false))
+                        {
+                            // Calculate world coordinates
+                            PointF lineStartW = Translate(vector.worldPositionX, vector.worldPositionY, vector.worldPositionZ);
+                            PointF lineStartS = new PointF(lineStartW.X * scalexS - offsetS.X, lineStartW.Y * scaleyS - offsetS.Y);
+                            if (firstStart == null) firstStart = lineStartS;
+                            if (lastStart == null) lastStart = lineStartS;
+                            else
+                            {
+                                g.DrawLine(new Pen(new SolidBrush(Color.GreenYellow), 2), lineStartS, lastStart.Value);
+                                lastStart = lineStartS;
+                            }
+                        }
+                        // Draw pit straight
+                        lastStart = null;
+                        foreach (var vector in layout.pointVectors.Where(b => b.InPit == true))
+                        {
+                            // Calculate world coordinates
+                            PointF lineStartW = Translate(vector.worldPositionX, vector.worldPositionY, vector.worldPositionZ);
+                            PointF lineStartS = new PointF(lineStartW.X * scalexS - offsetS.X, lineStartW.Y * scaleyS - offsetS.Y);
+                            if (lastStart == null) lastStart = lineStartS;
+                            else
+                            {
+                                g.DrawLine(new Pen(new SolidBrush(Color.GreenYellow), 2), lineStartS, lastStart.Value);
+                                lastStart = lineStartS;
+                            }
+                        }
+                        if (firstStart != null && lastStart != null)
+                        {
+                            g.DrawLine(new Pen(new SolidBrush(Color.GreenYellow), 2), lastStart.Value, firstStart.Value);
+                        }
+                    }
+                    foreach (var apex in layout.apexInfo)
+                    {
+                        var vector = layout.pointVectors.Where(pv => pv.lapDistance > apex.fastAverage).FirstOrDefault();
+                        if (vector != null)
+                        {
+                            // Calculate world coordinates
+                            PointF apexPointW = Translate(vector.worldPositionX, vector.worldPositionY, vector.worldPositionZ);
+                            // Convert to Screen coordinates
+                            PointF apexPointS = new PointF(apexPointW.X * scalexS - offsetS.X, apexPointW.Y * scaleyS - offsetS.Y);
+                            g.DrawLine(new Pen(new SolidBrush(Color.OrangeRed), 5), apexPointS, new PointF(apexPointS.X+1, apexPointS.Y+1));
+                        }
                     }
                 }
                 if (selectedLaps == null)
                 {
+                    // Paint cars on Circuit
                     foreach (CarMotionData cmd in dat.carMotionData)
                     {
                         PointF positionW = Translate(cmd.worldPositionX, cmd.worldPositionY, cmd.worldPositionZ);
@@ -515,6 +544,7 @@ namespace Vision2020
             if (sessionInfo != null)
             {
                 LogLine($"Ending session: {data.sessionUID}");
+                sessionInfo.EndSession();
             }
             while (DrawingCircuit || DrawingPlayers || DrawingTelemetry)
             {
@@ -592,6 +622,8 @@ namespace Vision2020
             {
                 return;
             }
+            SpeachSynthesizer.DoNotSpeak = false;
+
 
             using (var dlg = new OpenFileDialog() { Filter = "Data File|*.data|All files|*.*" })
             {
@@ -621,13 +653,14 @@ namespace Vision2020
             {
                 return;
             }
+            SpeachSynthesizer.DoNotSpeak = false;
 
             pr = new PacketReader(this);
             cancelSource = new CancellationTokenSource();
 
             ActiveTask = new Task(() =>
             {
-                
+
                 pr.Read(ReaderMode.rmRecord, cancelSource.Token);
             }, cancelSource.Token);
             ActiveTask.ContinueWith((x) => { LogLaps(x); });
@@ -756,7 +789,7 @@ namespace Vision2020
             if (Reset())
             {
                 LapSelect ls = new LapSelect();
-                if (ls.ShowDialog() == DialogResult.OK && ls.GetSelectedLaps() != null && ls.GetSelectedLaps().Count>0)
+                if (ls.ShowDialog() == DialogResult.OK && ls.GetSelectedLaps() != null && ls.GetSelectedLaps().Count > 0)
                 {
                     selectedLaps = new List<LapAnalyzer>();
                     lapLineBox.Visible = true;
@@ -828,20 +861,20 @@ namespace Vision2020
                 return;
             }
 
-            foreach(var lap in selectedLaps)
+            foreach (var lap in selectedLaps)
             {
                 // Progress time in recorded lap (if needed)
                 //          Notice:
                 //                  while( < .Count-1 ) // Last lapMotion will stay 'active'
                 //                  lap.offset          // set at loading time. 
                 //                                         This makes the sessionTime in the recorded lap relative      
-                while (lap.motionIndex < (lap.lapInfo.Details.lap.lapMotion.Count-1) &&
-                      PacketHelper.UnixTimeStampToDateTime(lap.lapInfo.Details.lap.lapMotion[lap.motionIndex].context.sessionTime) 
-                      <(DateTime.Now - lap.offset))
+                while (lap.motionIndex < (lap.lapInfo.Details.lap.lapMotion.Count - 1) &&
+                      PacketHelper.UnixTimeStampToDateTime(lap.lapInfo.Details.lap.lapMotion[lap.motionIndex].context.sessionTime)
+                      < (DateTime.Now - lap.offset))
                 {
                     lap.motionIndex++;
                 }
-                while (lap.telemetryIndex < (lap.lapInfo.Details.lap.lapTelemetry.Count-1) &&
+                while (lap.telemetryIndex < (lap.lapInfo.Details.lap.lapTelemetry.Count - 1) &&
                       PacketHelper.UnixTimeStampToDateTime(lap.lapInfo.Details.lap.lapTelemetry[lap.telemetryIndex].context.sessionTime)
                       < (DateTime.Now - lap.offset))
                 {
@@ -854,7 +887,7 @@ namespace Vision2020
                     lap.lapDataIndex++;
                 }
             }
-      //      sessionInfo.Update(re)
+            //      sessionInfo.Update(re)
         }
 
         private void lapLineBox_Paint(object sender, PaintEventArgs e)
@@ -868,7 +901,7 @@ namespace Vision2020
             e.Graphics.DrawImage(telemetryBitmap, new Point(0, 0));
 
             var trackPixels = lapLineBox.Width - 12;
-            var length = sessionInfo.circuit.circuitData.trackLength;
+            var length = sessionInfo.circuit.CircuitData.trackLength;
             float meterPerPixel = (float)length / (float)trackPixels;
             var top = 0;
 
@@ -899,11 +932,11 @@ namespace Vision2020
                 // Brake is drawn from top down
                 e.Graphics.DrawLine(BrakePen, positionTop, Brake);
                 // Drawing current speed as a Point
-                e.Graphics.DrawLine(SpeedPen, Speed, new PointF(Speed.X+1,Speed.Y));
+                e.Graphics.DrawLine(SpeedPen, Speed, new PointF(Speed.X + 1, Speed.Y));
                 // Drawing current Steering as a Point
                 e.Graphics.DrawLine(SteerPen, Steering, new PointF(Steering.X + 1, Steering.Y));
 
-                top = top + myBox.Height; 
+                top = top + myBox.Height;
 
             }
             DrawingTelemetry = false;
@@ -915,7 +948,7 @@ namespace Vision2020
         {
 
         }
-        
+
         private void DrawTelemetryBitmap()
         {
             telemetryBitmap = new Bitmap(lapLineBox.Width, lapLineBox.Height);
@@ -924,20 +957,20 @@ namespace Vision2020
             using (Graphics g = Graphics.FromImage(telemetryBitmap))
             {
                 var trackPixels = lapLineBox.Width - 12;
-                var length = sessionInfo.circuit.circuitData.trackLength;
+                var length = sessionInfo.circuit.CircuitData.trackLength;
                 float meterPerPixel = (float)length / (float)trackPixels;
-                
+
                 // 6 pixels left, 6 pixels right
                 var top = 0;
-                var SpeedPen = new Pen(new SolidBrush(Color.White),2);
+                var SpeedPen = new Pen(new SolidBrush(Color.White), 2);
                 var ThrottlePen = new Pen(new SolidBrush(Color.Green), 1);
                 var BrakePen = new Pen(new SolidBrush(Color.Red), 1);
                 var SteerPen = new Pen(new SolidBrush(Color.HotPink), 2);
                 foreach (var lap in selectedLaps)
                 {
-                    var myBox = new Rectangle(6, top, lapLineBox.Width-12, lapLineBox.Height / selectedLaps.Count);
-                    int motionIndex = 0; 
-                    int telemetryIndex = 0; 
+                    var myBox = new Rectangle(6, top, lapLineBox.Width - 12, lapLineBox.Height / selectedLaps.Count);
+                    int motionIndex = 0;
+                    int telemetryIndex = 0;
                     int lapDataIndex = 0;
                     var lapTelemetry = lap.lapInfo.Details.lap.lapTelemetry;
                     var lapMotion = lap.lapInfo.Details.lap.lapMotion;
@@ -946,9 +979,9 @@ namespace Vision2020
                     {
                         var motion = lapMotion[motionIndex].carMotion;
                         var context = lapMotion[motionIndex].context;
-                        while ((Math.Abs(lapTelemetry[telemetryIndex].context.sessionTime - context.sessionTime)>0.01) &&
+                        while ((Math.Abs(lapTelemetry[telemetryIndex].context.sessionTime - context.sessionTime) > 0.01) &&
                                 (lapTelemetry[telemetryIndex].context.sessionTime < context.sessionTime) &&
-                                (lapTelemetry.Count-1 > telemetryIndex))
+                                (lapTelemetry.Count - 1 > telemetryIndex))
                         {
                             telemetryIndex++;
                         }
@@ -964,24 +997,24 @@ namespace Vision2020
                         PointF positionBottom = new PointF(myBox.Left + data.lapDistance / meterPerPixel, myBox.Bottom);
                         PointF positionTop = new PointF(myBox.Left + data.lapDistance / meterPerPixel, myBox.Top);
 
-                        float boxHeight = (float) myBox.Height;
+                        float boxHeight = (float)myBox.Height;
 
                         //-1 = boxHeight     (
                         // 0 = boxHeight/2   1 * boxHeight/2 - Steer * boxHeight/2
                         // 1 = 0
 
                         PointF Throttle = new PointF(positionBottom.X, positionBottom.Y - boxHeight * telemetry.throttle); // Scale 0.0 - 1.0
-                        PointF Brake = new PointF(positionBottom.X, positionBottom.Y - (boxHeight * (1-telemetry.brake))); // Scale 0.0 - 1.0
+                        PointF Brake = new PointF(positionBottom.X, positionBottom.Y - (boxHeight * (1 - telemetry.brake))); // Scale 0.0 - 1.0
                         PointF Steering = new PointF(positionBottom.X, positionBottom.Y - (boxHeight / 2 * (1 - telemetry.steer))); // Scale -1.0 - 1.0
-                        PointF Speed = new PointF(positionBottom.X, positionBottom.Y - (boxHeight * ((float) telemetry.speed / 350f))); // Scale: 0 .. 350 (assumed max speed)
+                        PointF Speed = new PointF(positionBottom.X, positionBottom.Y - (boxHeight * ((float)telemetry.speed / 350f))); // Scale: 0 .. 350 (assumed max speed)
                         // Throttle is drawn from the bottom up
                         g.DrawLine(ThrottlePen, positionBottom, Throttle);
                         // Brake is drawn from top down
                         g.DrawLine(BrakePen, positionTop, Brake);
                         // Drawing current speed as a Point
-                        g.DrawLine(SpeedPen, Speed, new PointF(Speed.X-1,Speed.Y));
+                        g.DrawLine(SpeedPen, Speed, new PointF(Speed.X - 1, Speed.Y));
                         // Drawing current Steering as a Point
-                        g.DrawLine(SteerPen, Steering, new PointF(Steering.X-1, Steering.Y));
+                        g.DrawLine(SteerPen, Steering, new PointF(Steering.X - 1, Steering.Y));
                         motionIndex++;
                     }
                     //if (index < sessionInfo.playerInfo.Count())
@@ -1008,8 +1041,8 @@ namespace Vision2020
             Point x = MousePosition;  // Mouseposition is dynamic, also during debugging :-((
                                       // Stored mouse position just for useful debugging
             Point c = circuitBox.PointToClient(x);
-//            clickTimer.Start
-            for (int i = 0; i < 8; i ++)
+            //            clickTimer.Start
+            for (int i = 0; i < 8; i++)
             {
                 if (cameraSettings[i].Contains(c))
                 {
@@ -1114,6 +1147,8 @@ namespace Vision2020
 
             if (sessionInfo != null)
             {
+                sessionInfo.EndSession();
+
                 lock (sessionInfo)
                 {
                     selectedPlayer = null;
@@ -1134,6 +1169,8 @@ namespace Vision2020
             {
                 return;
             }
+            //
+            SpeachSynthesizer.DoNotSpeak = true;
             using (var dlg = new OpenFileDialog() { Filter = "Data File|*.data|All files|*.*" })
             {
                 if (dlg.ShowDialog() == DialogResult.Cancel)
@@ -1150,9 +1187,9 @@ namespace Vision2020
                 pr.Read(ReaderMode.rmAnalyze, cancelSource.Token);
             }
             , cancelSource.Token);
+
             ActiveTask.ContinueWith((x) => { LogLaps(x); });
             ActiveTask.Start();
-
             ScreenUpdateTimer.Enabled = true;
         }
 
@@ -1175,8 +1212,8 @@ namespace Vision2020
 
                                     // if { ti.bestLapNum}={ TS(ti.bestLapTime)}
                                     LogLine($" {lap.Key} {(lap.Value.valid ? "OK" : "--")} {(lap.Value.complete ? "OK" : "--")}" +
-                                        $" current {ti.currentLapNum}={TS(ti.currentLapTimeInMS)}"+
-                                        $" {ti.driverStatus} {ti.currentLapInvalid} {ti.resultStatus} {ti.lapDistance} {ti.totalDistance}"+
+                                        $" current {ti.currentLapNum}={TS(ti.currentLapTimeInMS)}" +
+                                        $" {ti.driverStatus} {ti.currentLapInvalid} {ti.resultStatus} {ti.lapDistance} {ti.totalDistance}" +
                                         $" ({lap.Value.lapTelemetry.Count}) ");
                                 }
                                 else

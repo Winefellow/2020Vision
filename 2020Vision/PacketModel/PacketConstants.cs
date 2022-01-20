@@ -27,6 +27,7 @@ namespace Vision2020
 
     public static class Constants
     {
+        public static int MaxApexMeasurements = 30;
         public enum StockType { stTeam, stCountry, stDriver, stTrack, stSurface, stPenalty, stInfringment, stSessionType }
         public static List<StockInfo> TeamList = new List<StockInfo>()
         {
@@ -287,8 +288,6 @@ namespace Vision2020
             new StockInfo() {id=85, name="Barbadian"},
             new StockInfo() {id=86, name="Welsh"},
             new StockInfo() {id=87, name="Vietnamese"},
-
-
         };
         public static List<StockInfo> DriverList = new List<StockInfo>()
         {

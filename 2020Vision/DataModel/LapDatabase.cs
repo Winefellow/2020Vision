@@ -209,6 +209,7 @@ namespace Vision2020
         public static List<LapInfo> Laps = new List<LapInfo>();
         public static void Add(CompletedLap completedLap)
         {
+
             if (Laps.FirstOrDefault(l => l.FileName == completedLap.Pathname()) == null)
             {
                 // New Lap. Save to disk
@@ -382,7 +383,12 @@ namespace Vision2020
 
         internal static string GetApexFileName(int lastTrack)
         {
-           return BS(baseDir)+BS(Constants.TrackList.First(t => t.id == lastTrack)?.name ?? "Unknown")+"apex.json";
+           return BS(baseDir)+BS(Constants.TrackList.First(t => t.id == lastTrack)?.name ?? "Unknown")+"Apex.json";
+        }
+
+        internal static string GetCircuitFileName(int lastTrack)
+        {
+            return BS(baseDir) + BS(Constants.TrackList.First(t => t.id == lastTrack)?.name ?? "Unknown") + "Circuit.json";
         }
     }
 

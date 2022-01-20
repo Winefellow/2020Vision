@@ -118,15 +118,18 @@ namespace Vision2020
                 callBack.LogLine("Saving data to " + $"f1_2020_{dateExt}_{callBack.SessionID}_{seq}.data");
 
                 int bytesWritten = 0;
-                using (var stream = new FileStream($"f1_2020_{dateExt}_{callBack.SessionID}_{seq}.data", FileMode.Append))
+                if (packetList.Count > 2000)
                 {
-                    foreach (var data in packetList)
+                    using (var stream = new FileStream($"f1_2020_{dateExt}_{callBack.SessionID}_{seq}.data", FileMode.Append))
                     {
-                        stream.Write(data, 0, data.Length);
-                        bytesWritten = bytesWritten + data.Length;
+                        foreach (var data in packetList)
+                        {
+                            stream.Write(data, 0, data.Length);
+                            bytesWritten = bytesWritten + data.Length;
+                        }
+                        stream.Close();
+                        callBack.LogLine($"{bytesWritten} bytes written to file");
                     }
-                    stream.Close();
-                    callBack.LogLine($"{bytesWritten} bytes written to file");
                 }
                 // Erase data;
                 packetList = new List<byte[]>();
